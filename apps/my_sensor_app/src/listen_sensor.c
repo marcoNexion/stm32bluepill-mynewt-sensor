@@ -103,7 +103,7 @@ static int start_remote_sensor_listeners(void) {
 }
 
 #else   //  If nRF24L01 Wireless Network is disabled (Standalone Node)...
-static int start_remote_sensor_listeners(void) {}  //  Don't start Remote Sensor for Standalone Node
+static int start_remote_sensor_listeners(void) { return -1;}  //  Don't start Remote Sensor for Standalone Node
 #endif  //  MYNEWT_VAL(NRF24L01)
 
 /////////////////////////////////////////////////////////
@@ -160,6 +160,7 @@ static int get_temperature(void *sensor_data, sensor_type_t type, struct sensor_
     memset(return_value, 0, sizeof(struct sensor_value));  //  Zero the return value for safety.
 
     switch(type) {                                   //  Is this raw or computed temperature?
+    #if 0 /* ML */
         case SENSOR_TYPE_AMBIENT_TEMPERATURE_RAW: {  //  If this is raw temperature...
             //  Interpret the sensor data as a sensor_temp_raw_data struct that contains raw temp.
             struct sensor_temp_raw_data *rawtempdata = (struct sensor_temp_raw_data *) sensor_data;
@@ -172,6 +173,7 @@ static int get_temperature(void *sensor_data, sensor_type_t type, struct sensor_
             console_printf("TMP listener got rawtmp %d\n", return_value->int_val);  ////
             break;
         }
+    #endif
         case SENSOR_TYPE_AMBIENT_TEMPERATURE: {      //  If this is computed temperature...
             //  Interpret the sensor data as a sensor_temp_data struct that contains computed temp.
             struct sensor_temp_data *tempdata = (struct sensor_temp_data *) sensor_data;

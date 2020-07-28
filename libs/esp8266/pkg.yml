@@ -34,6 +34,9 @@ pkg.deps:
     - "@apache-mynewt-core/libc/baselibc"  #  Baselibc, the tiny version of standard C library. Needs vsscanf.c patch.
     - "libs/sensor_network"                #  Sensor Network library
 
+pkg.cppflags:
+    - -fpermissive
+
 # Initialisation functions to be called by sysinit() during startup.
 # Mynewt consolidates the initialisation functions into sysinit()
 # and calls them according to the Stage number, highest number first.

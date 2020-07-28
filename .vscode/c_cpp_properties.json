@@ -2,6 +2,7 @@
     "configurations": [
         {
             "name": "Mynewt",
+
             "includePath": [
                 "${workspaceFolder}/bin/targets/bluepill_my_sensor/generated/include",
                 "${workspaceFolder}/repos/apache-mynewt-core/encoding/json/include",
@@ -21,6 +22,7 @@
                 "${workspaceFolder}/libs/semihosting_console/include",
                 "${workspaceFolder}/libs/sensor_coap/include",
                 "${workspaceFolder}/libs/sensor_network/include"
+
             ],
             "defines": [
                 "APP_NAME=my_sensor_app",

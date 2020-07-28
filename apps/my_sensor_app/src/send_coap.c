@@ -219,7 +219,11 @@ static int send_sensor_data_to_collector(struct sensor_value *val, const char *n
     //  transmit the message: libs/nrf24l01/src/transport.cpp
     return 0;
 }
+#else 
 
+static int send_sensor_data_to_collector(struct sensor_value *val, const char *node_id) {
+    return -1;
+}
 #endif  //  MYNEWT_VAL(NRF24L01)
 
 ///////////////////////////////////////////////////////////////////////////////
