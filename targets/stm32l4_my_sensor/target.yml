@@ -4,7 +4,7 @@
 target.app:           apps/my_sensor_app
 
 # Board Support Package (BSP) for the target
-target.bsp:           "hw/bsp/stm32l4"
+target.bsp:           "hw/bsp/nucleo144-l4r5"
 
 # Build with debug info
 target.build_profile: debug
