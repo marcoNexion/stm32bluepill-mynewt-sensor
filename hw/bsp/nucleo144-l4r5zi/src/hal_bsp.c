@@ -19,6 +19,9 @@
 #include "mcu/stm32_hal.h"
 #include "hal/hal_i2c.h"
 
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
+#include <hal/hal_spi.h>
+#endif
 
 #if MYNEWT_VAL(UART_0)
 #include <uart/uart.h>
@@ -101,7 +104,7 @@ hal_bsp_init(void)
     (void)rc;
 
     /* Make sure system clocks have started. */
-    hal_system_clock_start();
+    //hal_system_clock_start();
 
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",

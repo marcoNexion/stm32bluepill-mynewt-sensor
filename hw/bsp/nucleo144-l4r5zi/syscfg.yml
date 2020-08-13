@@ -17,32 +17,30 @@
 # under the License.
 #
 
-### Entries containing `***` need to be replaced with actual values.
+syscfg.defs:
+    STM32_FLASH_SIZE_KB:
+        description: 'Total flash size in KB.'
+        value: 1024
 
-pkg.name: "hw/bsp/nucleo144-l4r5"
-pkg.type: bsp
-pkg.description: "Description of your package"
-pkg.author: "You <you@you.org>"
-pkg.homepage: "http://your-url.org/"
-pkg.keywords:
-    - stm32
-    - stm32l4
-    - nucleo
+    UART_0:
+        description: 'UART 0'
+        value:  1
 
-pkg.cflags:
-    - -DSTM32L4xx
-    - -DSTM32L4R5xx
+    TIMER_0:
+        description: 'Timer 0'
+        value:  1
 
-pkg.cflags.HARDFLOAT:
-    - -mfloat-abi=hard -mfpu=fpv4-sp-d16
+    TIMER_1:
+        description: 'Timer 1'
+        value:  0
 
-pkg.deps:
-    # - *** <MCU-package>
-    - '@apache-mynewt-core/kernel/os'
-    - '@apache-mynewt-core/libc/baselibc'
-    - "@apache-mynewt-core/hw/mcu/stm/stm32l4xx"
+    TIMER_2:
+        description: 'Timer 2'
+        value:  0
 
-pkg.deps.UART_0:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-pkg.deps.UART_1:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+syscfg.vals:
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+    NFFS_FLASH_AREA: FLASH_AREA_NFFS
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+    BOOTUTIL_MAX_IMG_SECTORS: 256

@@ -1,4 +1,4 @@
 target.app: "@apache-mynewt-core/apps/boot"
-target.bsp: "hw/bsp/nucleo144-l4r5"
-#target.build_profile: optimized
-target.build_profile: debug
+target.bsp: "hw/bsp/nucleo144-l4r5zi"
+target.build_profile: optimized
+#target.build_profile: debug
