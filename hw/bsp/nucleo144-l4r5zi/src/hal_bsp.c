@@ -29,33 +29,63 @@
 #endif
 
 
-#if MYNEWT_VAL(UART_0) && MYNEWT_VAL(UART_1)
-static struct uart_dev hal_uart0;
-static struct uart_dev hal_uart1;
+#if MYNEWT_VAL(UART_0) 
+static struct uart_dev hal_uart_bc95;
 
-static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
-    [0] = {
-        .suc_uart = USART2,
-        .suc_rcc_reg = &RCC->APB1ENR1,
-        .suc_rcc_dev = RCC_APB1ENR1_USART2EN,
-        .suc_pin_tx = MCU_GPIO_PORTD(8),
-        .suc_pin_rx = MCU_GPIO_PORTD(9),
-        .suc_pin_rts = -1,
-        .suc_pin_cts = -1,
-        .suc_pin_af = GPIO_AF7_USART2,
-        .suc_irqn = USART2_IRQn
-    },
-    [1] = {
-        .suc_uart = LPUART1,
-        .suc_rcc_reg = &RCC->APB1ENR2,
-        .suc_rcc_dev = RCC_APB1ENR2_LPUART1EN,
-        .suc_pin_tx = MCU_GPIO_PORTC(4),
-        .suc_pin_rx = MCU_GPIO_PORTC(5),
-        .suc_pin_rts = -1,
-        .suc_pin_cts = -1,
-        .suc_pin_af = GPIO_AF8_LPUART1,
-        .suc_irqn = LPUART1_IRQn
-    }
+static const struct stm32_uart_cfg uart_bc95_cfg = {
+#if 0
+    .suc_uart = USART1,
+    .suc_rcc_reg = &RCC->APB2ENR,
+    .suc_rcc_dev = RCC_APB2ENR_USART1EN,
+    .suc_pin_tx = MCU_GPIO_PORTD(8),
+    .suc_pin_rx = MCU_GPIO_PORTD(9),
+    .suc_pin_rts = -1,
+    .suc_pin_cts = -1,
+    .suc_pin_af = GPIO_AF7_USART1,
+    .suc_irqn = USART1_IRQn
+
+#endif
+
+#if 0
+    .suc_uart = USART2,
+    .suc_rcc_reg = &RCC->APB1ENR1,
+    .suc_rcc_dev = RCC_APB1ENR1_USART2EN,
+    .suc_pin_tx = MCU_GPIO_PORTD(8),
+    .suc_pin_rx = MCU_GPIO_PORTD(9),
+    .suc_pin_rts = -1,
+    .suc_pin_cts = -1,
+    .suc_pin_af = GPIO_AF7_USART2,
+    .suc_irqn = USART2_IRQn
+#endif
+
+#if 1
+    .suc_uart = USART3,
+    .suc_rcc_reg = &RCC->APB1ENR1,
+    .suc_rcc_dev = RCC_APB1ENR1_USART3EN,
+    .suc_pin_tx = MCU_GPIO_PORTD(8),
+    .suc_pin_rx = MCU_GPIO_PORTD(9),
+    .suc_pin_rts = -1,
+    .suc_pin_cts = -1,
+    .suc_pin_af = GPIO_AF7_USART3,
+    .suc_irqn = USART3_IRQn
+#endif
+
+};
+#endif
+
+#if MYNEWT_VAL(UART_1)
+static struct uart_dev hal_uart_dbg;
+
+static const struct stm32_uart_cfg uart_dbg_cfg = {
+    .suc_uart = LPUART1,
+    .suc_rcc_reg = &RCC->APB1ENR2,
+    .suc_rcc_dev = RCC_APB1ENR2_LPUART1EN,
+    .suc_pin_tx = MCU_GPIO_PORTC(4),
+    .suc_pin_rx = MCU_GPIO_PORTC(5),
+    .suc_pin_rts = -1,
+    .suc_pin_cts = -1,
+    .suc_pin_af = GPIO_AF8_LPUART1,
+    .suc_irqn = LPUART1_IRQn
 };
 #endif
 
@@ -110,6 +140,88 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
     return pri;
 }
 
+
+
+
+
+
+void hal_system_clock_start(void){
+
+    RCC_OscInitTypeDef RCC_OscInitStruct;
+    RCC_ClkInitTypeDef RCC_ClkInitStruct;
+    RCC_PeriphCLKInitTypeDef PeriphClkInit;
+
+    /**Configure the main internal regulator output voltage
+     */
+    if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1_BOOST) != HAL_OK) {
+        assert(0);
+    }
+
+    /**Configure LSE Drive Capability
+     */
+    HAL_PWR_EnableBkUpAccess();
+
+    __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_LOW);
+
+    /**Initializes the CPU, AHB and APB busses clocks
+     */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSE | RCC_OSCILLATORTYPE_MSI;
+    RCC_OscInitStruct.LSEState = RCC_LSE_ON;
+    RCC_OscInitStruct.MSIState = RCC_MSI_ON;
+    RCC_OscInitStruct.MSICalibrationValue = 0;
+    RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
+    RCC_OscInitStruct.PLL.PLLM = 1;
+    RCC_OscInitStruct.PLL.PLLN = 60;
+    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+    RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
+    RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+        assert(0);
+    }
+
+    /**Initializes the CPU, AHB and APB busses clocks
+     */
+    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+                                    | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK) {
+        assert(0);
+    }
+
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1 | RCC_PERIPHCLK_USART2 | RCC_PERIPHCLK_LPUART1 | RCC_PERIPHCLK_USB;
+    PeriphClkInit.Lpuart1ClockSelection = RCC_LPUART1CLKSOURCE_PCLK1;
+    PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
+    PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
+    PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLLSAI1;
+    PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_MSI;
+    PeriphClkInit.PLLSAI1.PLLSAI1M = 1;
+    PeriphClkInit.PLLSAI1.PLLSAI1N = 24;
+    PeriphClkInit.PLLSAI1.PLLSAI1P = RCC_PLLP_DIV2;
+    PeriphClkInit.PLLSAI1.PLLSAI1Q = RCC_PLLQ_DIV2;
+    PeriphClkInit.PLLSAI1.PLLSAI1R = RCC_PLLR_DIV2;
+    PeriphClkInit.PLLSAI1.PLLSAI1ClockOut = RCC_PLLSAI1_48M2CLK;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
+        assert(0);
+    }
+
+    /**Enable MSI Auto calibration
+     */
+    HAL_RCCEx_EnableMSIPLLMode();
+
+
+    HAL_RCC_MCOConfig( RCC_MCO1, RCC_MCO1SOURCE_SYSCLK, RCC_MCODIV_8);
+}
+
+
+
+
+
 void
 hal_bsp_init(void)
 {
@@ -118,17 +230,17 @@ hal_bsp_init(void)
     (void)rc;
 
     /* Make sure system clocks have started. */
-    //hal_system_clock_start();
+    hal_system_clock_start();
 
 #if MYNEWT_VAL(UART_0)
-    rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
+    rc = os_dev_create((struct os_dev *) &hal_uart_bc95, "uart0",
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_bc95_cfg);
     assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(UART_1)
-    rc = os_dev_create((struct os_dev *) &hal_uart1, "uart1",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[1]);
+    rc = os_dev_create((struct os_dev *) &hal_uart_dbg, "uart1",
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_dbg_cfg);
     assert(rc == 0);
 #endif
 
