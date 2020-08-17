@@ -5,10 +5,12 @@ mfg.targets:
       #manifest_path: "bin/targets/stm32l4_boot/app/@apache-mynewt-core/apps/boot"
       area: FLASH_AREA_BOOTLOADER
       offset: 0x0
+
     - stm32l4_my_sensor:
       name: "targets/stm32l4_my_sensor"
       #manifest_path: "bin/targets/stm32l4_my_sensor/app/apps/my_sensor_app"
       area: FLASH_AREA_IMAGE_0
       offset: 0x0
+
 mfg.meta:
     area: FLASH_AREA_BOOTLOADER

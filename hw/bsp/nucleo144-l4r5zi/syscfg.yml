@@ -26,6 +26,10 @@ syscfg.defs:
         description: 'UART 0'
         value:  1
 
+    UART_1:
+        description: 'Whether to enable UART1'
+        value:  1
+
     TIMER_0:
         description: 'Timer 0'
         value:  1
@@ -44,3 +48,6 @@ syscfg.vals:
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
     BOOTUTIL_MAX_IMG_SECTORS: 256
+    
+    CONSOLE_UART_DEV: '"uart1"'
+    CONSOLE_UART_BAUD: 115200

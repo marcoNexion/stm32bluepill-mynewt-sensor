@@ -3,7 +3,7 @@
         {
             "name": "Mynewt",
             "includePath": [
-                "${workspaceFolder}/bin/targets/bluepill_my_sensor/generated/include",
+                "${workspaceFolder}",
                 "${workspaceFolder}/repos/apache-mynewt-core/encoding/json/include",
                 "${workspaceFolder}/repos/apache-mynewt-core/encoding/tinycbor/include",
                 "${workspaceFolder}/repos/apache-mynewt-core/hw/hal/include",
@@ -39,7 +39,7 @@
                 "OC_CLIENT"
             ],
             "windowsSdkVersion": "10.0.10586.0",
-            "compilerPath": "/usr/local/bin/arm-none-eabi-gcc",
+            "compilerPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/9 2020-q2-update/bin/arm-none-eabi-gcc",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "gcc-x64"

@@ -23,29 +23,43 @@
 #include <hal/hal_spi.h>
 #endif
 
-#if MYNEWT_VAL(UART_0)
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include <uart/uart.h>
 #include <uart_hal/uart_hal.h>
 #endif
 
 
-#if MYNEWT_VAL(UART_0)
+#if MYNEWT_VAL(UART_0) && MYNEWT_VAL(UART_1)
 static struct uart_dev hal_uart0;
+static struct uart_dev hal_uart1;
 
 static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
     [0] = {
         .suc_uart = USART2,
         .suc_rcc_reg = &RCC->APB1ENR1,
         .suc_rcc_dev = RCC_APB1ENR1_USART2EN,
-        .suc_pin_tx = MCU_GPIO_PORTA(2),
-        .suc_pin_rx = MCU_GPIO_PORTA(3),
+        .suc_pin_tx = MCU_GPIO_PORTD(8),
+        .suc_pin_rx = MCU_GPIO_PORTD(9),
         .suc_pin_rts = -1,
         .suc_pin_cts = -1,
         .suc_pin_af = GPIO_AF7_USART2,
         .suc_irqn = USART2_IRQn
+    },
+    [1] = {
+        .suc_uart = LPUART1,
+        .suc_rcc_reg = &RCC->APB1ENR2,
+        .suc_rcc_dev = RCC_APB1ENR2_LPUART1EN,
+        .suc_pin_tx = MCU_GPIO_PORTC(4),
+        .suc_pin_rx = MCU_GPIO_PORTC(5),
+        .suc_pin_rts = -1,
+        .suc_pin_cts = -1,
+        .suc_pin_af = GPIO_AF8_LPUART1,
+        .suc_irqn = LPUART1_IRQn
     }
 };
 #endif
+
+
 
 /** What memory to include in coredump. */
 static const struct hal_bsp_mem_dump dump_cfg[] = {
@@ -112,8 +126,14 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(UART_1)
+    rc = os_dev_create((struct os_dev *) &hal_uart1, "uart1",
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[1]);
+    assert(rc == 0);
+#endif
+
 #if MYNEWT_VAL(TIMER_0)
-    rc = hal_timer_init(0, NULL);
+    rc = hal_timer_init(0, TIM2);
     assert(rc == 0);
 #endif
 

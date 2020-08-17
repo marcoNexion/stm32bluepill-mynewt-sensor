@@ -26,3 +26,4 @@ syscfg.vals:
     OS_SCHEDULING: 0
     MSYS_1_BLOCK_COUNT: 0
     UART_0: 0  # Disable UART port to reduce ROM size
+    UART_1: 0   # Disable UART port to reduce ROM size

@@ -146,7 +146,7 @@ syscfg.vals:
     ###########################################################################
     # Common Settings for minimal ROM size
     CONSOLE_RTT:              0  # Disable RTT Console
-    CONSOLE_UART:             0  # Disable UART Console
+    CONSOLE_UART:             1  # Disable UART Console
     LOG_CLI:                  0  # Disable logging command-line interface
     LOG_LEVEL:              255  # Disable logs
     SENSOR_CLI:               0  # Disable sensor command-line interface

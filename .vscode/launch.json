@@ -1,58 +1,102 @@
 {
-    //  VSCode Debugger Config for Cortex Debug Extension.  We use Cortex Debug because it shows more details, e.g. the STM32 Peripherals.
+    // Utilisez IntelliSense pour en savoir plus sur les attributs possibles.
+    // Pointez pour afficher la description des attributs existants.
+    // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
-    "configurations": [
+    "inputs": [
         {
-            //  Cortex Debug Configuration: https://marcelball.ca/projects/cortex-debug/cortex-debug-launch-configurations/
-            "name": "Blue Pill",
-            "type": "cortex-debug",
-            "request": "launch",
-            //  OpenOCD path is defined in workspace.code-workspace.
-            "servertype": "openocd",
-            "cwd": "${workspaceRoot}",
-            //  Application Executable to be flashed to Blue Pill before debugging.  Note that the Application ELF image does not contain a valid Image Header.  So we must bypass the Bootloader, shown below.
-            "executable": "bin/targets/bluepill_my_sensor/app/apps/my_sensor_app/my_sensor_app.elf",
-            //  For Bootloader: "executable": "bin/targets/bluepill_boot/app/apps/boot_stub/boot_stub.elf",
-            "device": "STM32F103C8",
-            "configFiles": [ 
-                //  Tell OpenOCD to open the ST Link connection to STM32F1 MCU.
-                "interface/stlink-v2.cfg",
-                "target/stm32f1x.cfg",
-                //  Tell OpenOCD to run our custom debug commands.
-                "scripts/debug.ocd" 
-            ],
-            "preLaunchCommands": [
-                //  Before loading the Application, run these gdb commands.
-                //  Set timeout for executing openocd commands.
-                "set remotetimeout 60",
+          "type": "pickString",
+          "id": "targetSelector",
+          "description": "Select a target?",
+          "options": [
+            "bluepill_boot",
+            "bluepill_my_sensor",
+            "my_blinky_sim",
+            "stm32l4_boot",
+            "stm32l4_my_sensor"
+          ],
+          "default": "stm32l4_my_sensor"
+        }],
 
-                //  This indicates that an unrecognized breakpoint location should automatically result in a pending breakpoint being created.
-                "set breakpoint pending on",
-            
-                //  Display the Arm instruction when hitting breakpoint.
-                //  "display/i $pc",
-
-                //  Load Bootloader symbols in case we jump to the Bootloader.
-                //  "symbol-file bin/targets/bluepill_boot/app/apps/boot/boot.elf",
-
-                //  Restore Application symbols.
-                //  "symbol-file bin/targets/bluepill_my_sensor/app/apps/my_sensor_app/my_sensor_app.elf",
-            ],
-            "postLaunchCommands": [
-                //  After loading the Application, run these gdb commands.  The Application ELF image does not contain a valid Image Header.
-                //  So we bypass the Bootloader and jump to the Application directly.
-                "stepi",                    //  Must step before setting PC.
-                "set $pc = Reset_Handler",  //  Prepare to jump to the Application's Reset Handler.
-                "stepi",                    //  Execute the Reset Handler.
-                "break main",               //  Break at main().
-                "break __assert_func",      //  Break for any assert failures.
-                "break os_default_irq",     //  Break for any unhandled interrupts.
-                //  "continue",                 //  Run until main() and break.
-            ],
-            "preRestartCommands": [
-            ],
-            "postRestartCommands": [
-            ],        
-        }
-    ]
+    "configurations":[
+            {
+                "name":"Debug w/ ST-LINK-V2",
+                "type":"cppdbg",
+                "request":"launch",
+                "program":"${workspaceRoot}\\bin\\targets\\${input:targetSelector}\\app\\apps\\my_sensor_app\\my_sensor_app.elf",
+                "args":[],
+                "stopAtEntry":true,
+                "cwd":"${workspaceRoot}",
+                "environment":[],
+                "externalConsole":false,
+                "debugServerArgs": "-f interface\\stlink-v2.cfg -f target\\stm32l4x.cfg -c init -c \"reset init\"",
+                "serverLaunchTimeout":20000,
+                "filterStderr":true,
+                "filterStdout":false,
+                "serverStarted":"target halted due to debug-request, current mode: Thread",
+                "setupCommands":[
+                    {
+                        "text":"-environment-cd ${workspaceRoot}\\bin\\targets\\${input:targetSelector}\\app\\apps\\my_sensor_app\\"
+                    },
+                    {
+                        "text":"-target-select remote localhost:3333",
+                        "description":"connect to target",
+                        "ignoreFailures":false
+                    },
+                    {
+                        "text":"-interpreter-exec console \"set remotetimeout 5\"",
+                        "description":"Set the timeout limit to wait for the remote target to respond to num seconds. The default is 2 seconds",
+                        "ignoreFailures":false
+                    },
+                    {
+                        "text":"-file-exec-and-symbols my_sensor_app.elf",
+                        "description":"load file",
+                        "ignoreFailures":false
+                    },
+                    {
+                        "text":"-interpreter-exec console \"monitor endian little\"",
+                        "ignoreFailures":false
+                    },
+                    {
+                        "text":"-interpreter-exec console \"monitor reset\"",
+                        "ignoreFailures":false
+                    },
+                    {
+                        "text":"-interpreter-exec console \"monitor halt\"",
+                        "ignoreFailures":false
+                    },
+                    {
+                        "text":"-interpreter-exec console \"monitor arm semihosting enable\"",
+                        "ignoreFailures":false
+                    },
+                    {
+                        "text":"-target-download",
+                        "description":"flash target",
+                        "ignoreFailures":false
+                    }
+                ],
+                "logging":{
+                    "moduleLoad":true,
+                    "trace":true,
+                    "engineLogging":true,
+                    "programOutput":true,
+                    "exceptions":true
+                },
+                "linux":{
+                    "MIMode":"gdb",
+                    "MIDebuggerPath":"/usr/bin/arm-none-eabi-gdb",
+                    "debugServerPath":"openocd"
+                },
+                "osx":{
+                    "MIMode":"gdb",
+                    "MIDebuggerPath":"/usr/local/bin/arm-none-eabi-gdb",
+                    "debugServerPath":"openocd"
+                },
+                "windows":{
+                    "MIMode":"gdb",
+                    "MIDebuggerPath":"C:\\Program Files (x86)\\GNU Arm Embedded Toolchain\\7 2018-q2-update\\bin\\arm-none-eabi-gdb.exe",
+                    "debugServerPath":"C:\\Dev\\OpenOCD-20200729-0.10.0\\bin\\openocd.exe",              
+                }
+            }
+        ]
 }
