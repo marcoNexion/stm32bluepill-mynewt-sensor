@@ -26,119 +26,56 @@
 #include <os/os.h>
 #include <console/console.h>
 #include <hal/hal_uart.h>     //  UART functions.
-#include "BufferedSerial.h"
+#include "buffered_serial/buffered_serial.h"
+
+#define _SET_BIT(var, bit)   { var |= (bit); }   //  Set the specified bit of var to 1, e.g. _SET_BIT(SCB->SCR, SCB_SCR_SLEEPDEEP) sets bit SCB_SCR_SLEEPDEEP of SCB_SCR to 1.
+#define _CLEAR_BIT(var, bit) { var &= ~(bit); }  //  Set the specified bit of var to 0, e.g. _CLEAR_BIT(SCB->SCR, SCB_SCR_SLEEPDEEP) sets bit SCB_SCR_SLEEPDEEP of SCB_SCR to 0.
+
+//  From repos/apache-mynewt-core/hw/mcu/stm/stm32_common/src/hal_uart.c
+#if !MYNEWT_VAL(STM32_HAL_UART_HAS_SR)
+#  define STATUS(x)     ((x)->ISR)
+#  define RXDR(x)       ((x)->RDR)
+#else
+#  define STATUS(x)     ((x)->SR)
+#  define RXDR(x)       ((x)->DR)
+#endif
 
 extern "C" int BufferedPrintfC(void *stream, int size, const char* format, va_list arg);
 
-//  #define TEST_UART  //  Uncomment to test locally.
-
-#ifdef TEST_UART
-    #define MY_UART 0  //  Select UART port: 0 means UART2.
-#endif  //  TEST_UART
-
-char rx_buf[256];        //  Receive buffer.  TODO: Support multiple instances.
-char *rx_ptr = NULL;     //  Pointer to next receive buffer byte to be received.  TODO: Support multiple instances.
-
-#ifdef TEST_UART
-    static const char *cmds[] = {     //  List of commands to be sent.
-        "AT+CWMODE_CUR=3\r\n",  //  Set to WiFi Client mode (not WiFi Access Point mode).
-        "AT+CWLAP\r\n",         //  List all WiFi access points.
-        NULL                    //  No more commands.
-    };
-    static const char **cmd_ptr = NULL;   //  Pointer to command being sent.
-    static const char *tx_buf = NULL;     //  Command buffer being sent.
-    static const char *tx_ptr = NULL;     //  Pointer to next command buffer byte to be sent.
-    static struct os_callout next_cmd_callout;  //  Callout to switch to next command after a delay.
-#endif  //  TEST_UART
-
 static int uart_tx_char(void *arg) {    
     //  UART driver asks for more data to send. Return -1 if no more data is available for TX.
-#ifndef TEST_UART
     assert(arg != NULL);
     BufferedSerial *serial = (BufferedSerial *) arg;
     int byte = serial->txIrq();
+    //  { char buf[1]; buf[0] = (char) byte; console_buffer(buf, 1); console_printf("["); console_printhex(byte); console_printf("] "); } ////
     return byte;
-#else
-    if (tx_ptr == NULL || *tx_ptr == 0) { return -1; }
-    char byte = *tx_ptr++;  //  Fetch next byte from tx buffer.
-    return byte;
-#endif  //  TEST_UART
 }
 
 static int uart_rx_char(void *arg, uint8_t byte) {
     //  UART driver reports incoming byte of data. Return -1 if data was dropped.
-    if (rx_ptr - rx_buf < (int) sizeof(rx_buf)) { *rx_ptr++ = byte; }  //  Save to rx buffer.
-#ifndef TEST_UART
     assert(arg != NULL);
     BufferedSerial *serial = (BufferedSerial *) arg;
     int rc = serial->rxIrq(byte);
+    //  { char buf[1]; buf[0] = (char) byte; console_printf("("); console_buffer(buf, 1); console_printf(") "); } ////
     return rc;
-#else
-    return 0;
-#endif  //  TEST_UART
 }
 
 static void uart_tx_done(void *arg) {
-    //  UART driver reports that transmission is complete.
-#ifdef TEST_UART
-    //  We wait 5 seconds for the current command to complete, 
-    //  then trigger the next_cmd callout to switch to next command.
-    int rc = os_callout_reset(&next_cmd_callout, OS_TICKS_PER_SEC * 5);
-    assert(rc == 0);
-#endif  //  TEST_UART
+    //  UART driver reports that transmission is complete.  Do nothing.
 }
 
-#ifdef TEST_UART
-    static void next_cmd(struct os_event *ev) {
-        //  Switch to next command.
-        assert(ev);
-        if (rx_buf[0]) {  //  If UART data has been received...
-            console_printf("< %s\n", rx_buf);   //  Show the UART data.
-            memset(rx_buf, 0, sizeof(rx_buf));  //  Empty the rx buffer.
-            rx_ptr = rx_buf;
-        }
-        if (*cmd_ptr == NULL) {      //  No more commands.
-            tx_buf = NULL;
-            tx_ptr = NULL;
-            return; 
-        }
-        tx_buf = *cmd_ptr++;         //  Fetch next command.
-        tx_ptr = tx_buf;
-        hal_uart_start_rx(MY_UART);  //  Start receiving UART data.
-        hal_uart_start_tx(MY_UART);  //  Start transmitting UART data.
-    }
-#endif  //  TEST_UART
-
-static int setup_uart(BufferedSerial *serial) {
+int setup_uart(BufferedSerial *serial) {
+    //  Configure the UART port HAL settings.
     int rc;
-#ifndef TEST_UART
     int uart = serial->_uart;
     uint32_t baud = serial->_baud;
-#else
-    int uart = MY_UART;
-    uint32_t baud = 115200;
-#endif  //  TEST_UART
-    //  Init rx buffer.
-    memset(rx_buf, 0, sizeof(rx_buf));
-    rx_ptr = rx_buf;
-    #ifdef TEST_UART
-        //  Init tx buffer.
-        cmd_ptr = cmds;
-        if (*cmd_ptr == NULL) {  //  No more commands.
-            tx_buf = NULL;
-            tx_ptr = NULL;
-            return -1; 
-        }
-        tx_buf = *cmd_ptr++;  //  Fetch first command.
-        tx_ptr = tx_buf;
-        //  Define the next_cmd callout to switch to next command.
-        os_callout_init(&next_cmd_callout, os_eventq_dflt_get(), next_cmd, NULL);
-    #endif  //  TEST_UART
+
     //  Define the UART callbacks.
     rc = hal_uart_init_cbs(uart,
         uart_tx_char, uart_tx_done,
         uart_rx_char, serial);
     if (rc != 0) { return rc; }
+
     //  Set UART parameters.
     assert(baud != 0);
     rc = hal_uart_config(uart,
@@ -149,11 +86,30 @@ static int setup_uart(BufferedSerial *serial) {
         HAL_UART_FLOW_CTL_NONE
     );
     if (rc != 0) { return rc; }
-    #ifdef TEST_UART
-        //  Don't call console_printf() tx/rx or some UART data will be dropped.
-        hal_uart_start_rx(MY_UART);  //  Start receiving UART data.
-        hal_uart_start_tx(MY_UART);  //  Start transmitting UART data.
-    #endif  //  TEST_UART
+
+    //// TODO
+#ifdef NOTUSED    
+    if (uart == 2) {
+        // Swap TX/RX so that USART3 behaves like LPUART1
+        console_printf("USART3->CR2: %lx | %lx ", USART3->CR2, USART_CR2_SWAP);
+
+        //  u->u_regs->CR1 |= (USART_CR1_RXNEIE | USART_CR1_UE);
+        _CLEAR_BIT(USART3->CR1, USART_CR1_UE);
+        (void) RXDR(USART3);
+        (void) STATUS(USART3);
+
+        _SET_BIT(USART3->CR2, USART_CR2_SWAP);
+        (void) RXDR(USART3);
+        (void) STATUS(USART3);
+
+        _SET_BIT(USART3->CR1, USART_CR1_UE);
+        (void) RXDR(USART3);
+        (void) STATUS(USART3);
+
+        console_printf("-> %lx\n", USART3->CR2); console_flush();
+    }
+#endif  //  NOTUSED
+
     return 0;
 }
 
@@ -194,11 +150,12 @@ int BufferedSerial::getc(int timeout)
 
 int BufferedSerial::putc(int c)
 {
-    _txbuf.put(c);
+    _txbuf.put(c);    
     BufferedSerial::prime();
     return c;
 }
 
+#ifdef NOTUSED
 int BufferedSerial::puts(const char *s)
 {
     if (s != NULL) {
@@ -212,6 +169,7 @@ int BufferedSerial::puts(const char *s)
     }
     return 0;
 }
+#endif  //  NOTUSED
 
 extern "C" size_t BufferedSerialThunk(void *buf_serial, const void *s, size_t length)
 {
@@ -263,9 +221,9 @@ void BufferedSerial::prime(void)
         _initialised = 1;
         int rc = setup_uart(this);
         assert(rc == 0);
+        hal_uart_start_rx(_uart);  //  Start receiving UART data.
     }
-    hal_uart_start_rx(_uart);  //  Start receiving UART data.
-    hal_uart_start_tx(_uart);  //  Start transmitting UART data.
+    hal_uart_start_tx(_uart);  //  Start transmitting UART data in the buffer.  txIrq will retrieve the data from the buffer.
 }
 
 void BufferedSerial::attach(void (*func)(void *), void *arg, IrqType type)

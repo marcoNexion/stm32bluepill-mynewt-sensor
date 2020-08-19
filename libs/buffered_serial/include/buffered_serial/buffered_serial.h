@@ -25,7 +25,7 @@
 #define BUFFEREDSERIAL_H
 
 #include <os/os.h>  //  For os_sem.
-#include "MyBuffer.h"
+#include "ring_buffer.h"
 #undef putc      //  Avoid conflict with putc() below.
 
 #define IrqType int
@@ -76,8 +76,8 @@
 class BufferedSerial
 {
 private:
-    MyBuffer <char> _txbuf;
-    MyBuffer <char> _rxbuf;
+    RingBuffer <char> _txbuf;
+    RingBuffer <char> _rxbuf;
     uint32_t      _txbuf_size;
     uint32_t      _rxbuf_size; 
     uint8_t       _initialised;  //  Set to non-zero if UART port has been initialised.

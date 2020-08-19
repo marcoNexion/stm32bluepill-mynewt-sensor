@@ -21,10 +21,10 @@
  * limitations under the License.
  */
  
-#include "MyBuffer.h"
+#include "buffered_serial/ring_buffer.h"
 
 template <class T>
-void MyBuffer<T>::init(T *buffer, uint32_t size)
+void RingBuffer<T>::init(T *buffer, uint32_t size)
 {
     _buf = buffer;
     _size = size;
@@ -32,13 +32,13 @@ void MyBuffer<T>::init(T *buffer, uint32_t size)
 }
 
 template <class T>
-uint32_t MyBuffer<T>::getSize() 
+uint32_t RingBuffer<T>::getSize() 
 { 
     return this->_size; 
 }
 
 template <class T>
-void MyBuffer<T>::clear(void)
+void RingBuffer<T>::clear(void)
 {
     _wloc = 0;
     _rloc = 0;
@@ -48,19 +48,19 @@ void MyBuffer<T>::clear(void)
 }
 
 template <class T>
-uint32_t MyBuffer<T>::peek(char c)
+uint32_t RingBuffer<T>::peek(char c)
 {
     return 1;
 }
 
 // make the linker aware of some possible types
-template class MyBuffer<uint8_t>;
-template class MyBuffer<int8_t>;
-template class MyBuffer<uint16_t>;
-template class MyBuffer<int16_t>;
-template class MyBuffer<uint32_t>;
-template class MyBuffer<int32_t>;
-template class MyBuffer<uint64_t>;
-template class MyBuffer<int64_t>;
-template class MyBuffer<char>;
-template class MyBuffer<wchar_t>;
+template class RingBuffer<uint8_t>;
+template class RingBuffer<int8_t>;
+template class RingBuffer<uint16_t>;
+template class RingBuffer<int16_t>;
+template class RingBuffer<uint32_t>;
+template class RingBuffer<int32_t>;
+template class RingBuffer<uint64_t>;
+template class RingBuffer<int64_t>;
+template class RingBuffer<char>;
+template class RingBuffer<wchar_t>;

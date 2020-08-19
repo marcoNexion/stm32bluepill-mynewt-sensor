@@ -1,7 +1,4 @@
-/* Patched for stm32bluepill-mynewt-sensor to reduce bootloader size
- * https://github.com/lupyuen/stm32bluepill-mynewt-sensor/blob/master/patch/bluepill.ld 
- * repos/apache-mynewt-core/hw/bsp/bluepill/bluepill.ld
- *
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,13 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-MEMORY
-{
-  /*  Must sync with scripts/flash-app.ocd, repos/apache-mynewt-core/hw/bsp/bluepill/bsp.yml  */
-  FLASH (rx) :  ORIGIN = 0x08001000, LENGTH = 60K /* First image slot moved from 0x8008000 to 0x8001000. */
-  RAM (rwx) :   ORIGIN = 0x20000000, LENGTH = 20K
-}
-
-/* This linker script is used for images and thus contains an image header */
-_imghdr_size = 0x20;
+//  Used for generating Rust bindings for HAL APIs
+//#include <hal/hal_bsp.h>
+//#include <hal/hal_flash.h>
+//#include <hal/hal_flash_int.h>
+#include <hal/hal_gpio.h>
+#include <hal/hal_i2c.h>
+//#include <hal/hal_nvreg.h>
+//#include <hal/hal_os_tick.h>
+#include <hal/hal_spi.h>
+//#include <hal/hal_system.h>
+//#include <hal/hal_timer.h>
+//#include <hal/hal_uart.h>
+//#include <hal/hal_watchdog.h>

@@ -21,8 +21,8 @@
  * limitations under the License.
  */
  
-#ifndef MYBUFFER_H
-#define MYBUFFER_H
+#ifndef RING_BUFFER_H
+#define RING_BUFFER_H
 
 #include <stdint.h>
 #include <string.h>
@@ -32,9 +32,9 @@
  * Example:
  * @code
  *  #include "mbed.h"
- *  #include "MyBuffer.h"
+ *  #include "RingBuffer.h"
  *
- *  MyBuffer <char> buf;
+ *  RingBuffer <char> buf;
  *
  *  int main()
  *  {
@@ -58,7 +58,7 @@
  */
 
 template <typename T>
-class MyBuffer
+class RingBuffer
 {
 private:
     T   *_buf;
@@ -106,7 +106,7 @@ public:
      *  @param data Something to put in the buffer
      *  @return
      */
-    MyBuffer &operator= (T data)
+    RingBuffer &operator= (T data)
     {
         put(data);
         return *this;
@@ -125,7 +125,7 @@ public:
 };
 
 template <class T>
-inline void MyBuffer<T>::put(T data)
+inline void RingBuffer<T>::put(T data)
 {
     _buf[_wloc++] = data;
     _wloc %= (_size-1);
@@ -134,7 +134,7 @@ inline void MyBuffer<T>::put(T data)
 }
 
 template <class T>
-inline T MyBuffer<T>::get(void)
+inline T RingBuffer<T>::get(void)
 {
     T data_pos = _buf[_rloc++];
     _rloc %= (_size-1);
@@ -143,7 +143,7 @@ inline T MyBuffer<T>::get(void)
 }
 
 template <class T>
-inline T *MyBuffer<T>::head(void)
+inline T *RingBuffer<T>::head(void)
 {
     T *data_pos = &_buf[0];
     
@@ -151,7 +151,7 @@ inline T *MyBuffer<T>::head(void)
 }
 
 template <class T>
-inline uint32_t MyBuffer<T>::available(void)
+inline uint32_t RingBuffer<T>::available(void)
 {
     return (_wloc == _rloc) ? 0 : 1;
 }

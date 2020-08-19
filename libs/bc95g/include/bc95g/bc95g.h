@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 //  BC95G Driver for Apache Mynewt.  Functions for creating the BC95G device instance and performing BC95G functions.
 //  More about Mynewt Drivers: https://mynewt.apache.org/latest/os/modules/drivers/driver.html
 #ifndef __BC95G_DRIVER_H__
@@ -11,7 +29,7 @@ extern "C" {  //  Expose the types and functions below to C functions.
 #define BC95G_SOCKET_COUNT 1    //  Max number of concurrent UDP operations allowed
 
 //  Use static buffers to avoid dynamic memory allocation (new, delete)
-#define BC95G_TX_BUFFER_SIZE      400  //  Must be large enough to hold sensor and geolocation CoAP UDP messages.
+#define BC95G_TX_BUFFER_SIZE      900  //  Must be large enough to hold sensor and geolocation CoAP UDP messages. 1 byte is represented by 3 chars.
 #define BC95G_RX_BUFFER_SIZE      256
 #define BC95G_PARSER_BUFFER_SIZE  256
 
@@ -57,11 +75,17 @@ int bc95g_default_cfg(struct bc95g_cfg *cfg);
 //  Configure the BC95G driver.  Called by os_dev_create().  Return 0 if successful.
 int bc95g_init(struct os_dev *dev0, void *arg);
 
-//  Apply the BC95G driver configuration.  Return 0 if successful.
-int bc95g_config(struct bc95g *dev, struct bc95g_cfg *cfg);  
+//  Copy the BC95G driver configuration from cfg into drv.  Return 0 if successful.
+int bc95g_config(struct bc95g *drv, struct bc95g_cfg *cfg);  
 
 //  Connect to the NB-IoT network.  Return 0 if successful.
 int bc95g_connect(struct bc95g *dev);  
+
+//  Attach to the NB-IoT network.  Return 0 if successful.
+int bc95g_attach(struct bc95g *dev);
+
+//  Detach from the NB-IoT network.  Return 0 if successful.
+int bc95g_detach(struct bc95g *dev);
 
 //  Allocate a socket and save to `socket_ptr`.  Return 0 if successful.
 int bc95g_socket_open(struct bc95g *dev, struct bc95g_socket **socket_ptr);

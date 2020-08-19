@@ -19,13 +19,12 @@
 
 pkg.name: hw/bsp/stm32l4
 pkg.type: bsp
-pkg.description: BSP definition for generic stm32l4 boards
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
+pkg.description: BSP definition for Ghostyu NB-EK-L476 (STM32L476RCT6)
+pkg.author:      "Lee Lup Yuen <luppy@appkaki.com>"
+pkg.homepage:    "https://github.com/lupyuen"
 pkg.keywords:
     - stm32
     - stm32l4
-    - nucleo
 
 pkg.cflags:
     - -DSTM32L476xx
@@ -40,4 +39,6 @@ pkg.deps:
 pkg.deps.UART_0:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 pkg.deps.UART_1:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+pkg.deps.UART_2:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"

@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 //  BC95-G Driver for Apache Mynewt.  Functions for creating the driver instance and performing BC95-G functions.
 //  More about Mynewt Drivers: https://mynewt.apache.org/latest/os/modules/drivers/driver.html
 //  Note that we are using a patched version of apps/my_sensor_app/src/vsscanf.c that
@@ -11,7 +29,19 @@
 #include "bc95g/bc95g.h"
 #include "bc95g/transport.h"
 #include "util.h"
-#include "ATParser.h"
+#include "at_parser.h"
+
+/// Number of retries for NB-IoT network registration
+#define MAX_REGISTRATION_RETRIES 40
+
+/// Number of retries for NB-IoT network attach
+#define MAX_ATTACH_RETRIES 40
+
+//  Transmit (NSOSTF) Flags:
+//  0x100 Exception Message: Send message with high priority
+//  0x200 Release Indicator: indicate release after next message
+//  0x400 Release Indicator: indicate release after next message has been replied
+#define TRANSMIT_FLAGS "0x200"  //  Release the connection i.e. don't wait for response. Saves power. See https://forum.iot.t-mobile.nl/topic/278/how-much-battery-lifetime-can-we-expect-with-a-sara-n200-module-on-our-iot-network
 
 static int register_transport(const char *network_device, void *server_endpoint, const char *host, uint16_t port, uint8_t server_endpoint_size);
 
@@ -55,7 +85,8 @@ enum CommandId {
 
     //  [1] Attach to network
     NBAND,          //  select band
-    CFUN,           //  enable functions
+    CFUN_ENABLE,    //  enable network function
+    CFUN_DISABLE,   //  disable network function
     CFUN_QUERY,     //  query functions
     CEREG,          //  network registration
     CEREG_QUERY,    //  query registration
@@ -63,8 +94,7 @@ enum CommandId {
     CGATT_QUERY,    //  query attach
 
     //  [2] Transmit message
-    NSOCR,  //  allocate port
-    NSOST,  //  transmit
+    NSOCR,   //  allocate port
 
     //  [3] Receive response
     NSORF,  //  receive msg
@@ -87,7 +117,8 @@ static const char *COMMANDS[] = {
 
     //  [1] Attach to network
     "NBAND=%d", //  NBAND: select band
-    "CFUN=1",   //  CFUN: enable functions
+    "CFUN=1",   //  CFUN_ENABLE: enable network function
+    "CFUN=0",   //  CFUN_DISABLE: disable network function
     "CFUN?",    //  CFUN_QUERY: query functions
     "CEREG=0",  //  CEREG: network registration
     "CEREG?",   //  CEREG_QUERY: query registration
@@ -96,11 +127,10 @@ static const char *COMMANDS[] = {
 
     //  [2] Transmit message
     "NSOCR=DGRAM,17,0,1",  //  NSOCR: allocate port
-    "NSOST=%d,%s,%d,%d,%s,%d",  //  NSOST: transmit
 
     //  [3] Receive response
     "NSORF=1,%d",  //  NSORF: receive msg
-    "NSOCL=1,%d",  //  NSOCL: close port
+    "NSOCL=%d",  //  NSOCL: close port
 
     //  [4] Diagnostics
     "CGPADDR",   //  CGPADDR: IP address
@@ -260,7 +290,7 @@ static int bc95g_open(struct os_dev *dev0, uint32_t timeout, void *arg) {
         bc95g_parser_buffer, BC95G_PARSER_BUFFER_SIZE,
         false
     );
-    internal_configure(cfg->uart);         //  Configure the UART port.  0 means UART2.
+    internal_configure(cfg->uart);         //  Configure the UART port.  0 means UART2, 1 means UART1.
     internal_attach(&bc95g_event, dev);    //  Set the callback for BC95G events.
     return 0;
 }
@@ -295,13 +325,17 @@ err:
 int bc95g_default_cfg(struct bc95g_cfg *cfg) {
     //  Copy the default BC95G config into cfg.  Returns 0.
     memset(cfg, 0, sizeof(struct bc95g_cfg));  //  Zero the entire object.
-    cfg->uart = 0;  //  Default to UART number 0, which is UART2.
+    cfg->uart = MYNEWT_VAL(BC95G_UART);  //  0 for UART2, 1 for UART1.
     return 0;
 }
 
 int bc95g_config(struct bc95g *drv, struct bc95g_cfg *cfg) {
-    //  Apply the BC95G driver configuration.  Return 0 if successful.
-    return 0;  //  Nothing to do.  We will apply the config in bc95g_open().
+    //  Copy the BC95G driver configuration from cfg into drv.  Return 0 if successful.
+    struct bc95g_cfg *drv_cfg = &drv->cfg;
+    drv_cfg->uart = cfg->uart;    
+    assert(drv_cfg->uart == MYNEWT_VAL(BC95G_UART));
+    internal_configure(drv_cfg->uart);  //  Configure the UART port.  0 means UART2, 1 means UART1.
+    return 0;
 }
 
 static int register_transport(const char *network_device, void *server_endpoint, const char *host, uint16_t port, uint8_t server_endpoint_size) {
@@ -335,7 +369,7 @@ static bool sleep(uint16_t seconds) {
 static bool wait_for_registration(struct bc95g *dev) {
     //  Set the LED for output: PC13. TODO: Super Blue Pill uses a different pin for LED.
     hal_gpio_init_out(LED_BLINK_PIN, 1);
-    for (uint8_t i = 0; i < 20; i++) {
+    for (uint8_t i = 0; i < MAX_REGISTRATION_RETRIES; i++) {
         //  Response contains 2 integers: `code` and `status` e.g. `=+CEREG:0,1`
         int code = -1, status = -1;
         //  CEREG_QUERY: query registration
@@ -352,12 +386,12 @@ static bool wait_for_registration(struct bc95g *dev) {
         console_flush();
         sleep(2);
     }
-    return false;  //  Not registered after 20 retries, quit.
+    return false;  //  Not registered after retries, quit.
 }
 
 /// Wait for NB-IoT network to be attached
 static bool wait_for_attach(struct bc95g *dev) {
-    for (uint8_t i = 0; i < 20; i++) {
+    for (uint8_t i = 0; i < MAX_ATTACH_RETRIES; i++) {
         //  Response contains 1 integer: `state` e.g. `=+CGATT:1`
         int state = -1;
         //  CGATT_QUERY: query attach
@@ -373,28 +407,75 @@ static bool wait_for_attach(struct bc95g *dev) {
         console_flush();
         sleep(2);
     }
-    return false;  //  Not attached after 20 retries, quit.
+    return false;  //  Not attached after retries, quit.
 }
 
 /// At startup, keep sending AT and wait for module to respond OK. This skips the ERROR response at startup.
 static bool wait_for_ok(struct bc95g *dev) {
+    //  Send AT and check for OK response.  Insert "\r\n" in case there was a previous command.
+    bool res = (
+        parser.send("AT") &&
+        parser.recv("OK")
+    );
+    //  If OK received, flush the response and continue to next command.
+    if (res) { parser.flush(); return true; }
+    //  Send AT and check for OK response.  Insert "\r\n" in case there was a previous command.
+    res = (
+        parser.send("\r\nAT") &&
+        parser.recv("OK")
+    );
+    //  If OK received, flush the response and continue to next command.
+    if (res) { parser.flush(); return true; }
     for (uint8_t i = 0; i < 20; i++) {
-        //  Send AT and check for OK response.  Insert "\r\n" in case there was a previous command.
-        bool res = (
-            parser.send("\r\nAT") &&
+        //  Send AT and check for OK response.
+        res = (
+            parser.send("AT") &&
             parser.recv("OK")
         );
-        if (res) {
-            //  If OK received, flush the response and continue to next command.
-            parser.flush();
-            return true;
-        }
-        //  Wait 2 seconds and retry.
+        //  If OK received, flush the response and continue to next command.
+        if (res) { parser.flush(); return true; }        
+        //  Wait 1 second and retry.
         console_flush();
-        sleep(2);
+        sleep(1);
     }
-    return false;  //  Can't get OK 20 retries, quit.
+    return false;  //  Can't get OK after 20 retries, quit.
 }
+
+/*
+/// At startup, keep sending AT and wait for module to respond OK. This skips the ERROR response at startup.
+static bool wait_for_ok(struct bc95g *dev) {
+    bool res = false;
+    //  Send ATE0 to disable echo and check for OK response.
+    res = (
+        parser.send("ATE0") &&
+        parser.recv("OK")
+    );
+    //  If OK received, flush the response and continue to next command.
+    if (res) { parser.flush(); return true; }
+
+    //  Send ATE0 to disable echo and check for OK response.  Insert "\r\n" in case there was a previous command.
+    res = (
+        parser.send("\r\nATE0") &&
+        parser.recv("OK")
+    );
+    //  If OK received, flush the response and continue to next command.
+    if (res) { parser.flush(); return true; }
+
+    for (uint8_t i = 0; i < 20; i++) {
+        //  Send ATE0 to disable echo and check for OK response.
+        res = (
+            parser.send("ATE0") &&
+            parser.recv("OK")
+        );
+        //  If OK received, flush the response and continue to next command.
+        if (res) { parser.flush(); return true; }        
+        //  Wait 1 second and retry.
+        console_flush();
+        sleep(1);
+    }
+    return false;  //  Can't get OK after 20 retries, quit.
+}
+*/
 
 /// [Phase 0] Prepare to transmit
 static bool prepare_to_transmit(struct bc95g *dev) {
@@ -412,19 +493,24 @@ static bool prepare_to_transmit(struct bc95g *dev) {
         //  Reboot will take longer than other commands. We wait then flush.
         parser.send("AT") &&
         expect_ok(dev) &&
-        (parser.flush() == 0)
+        (parser.flush() == 0) &&
+
+        //  NBAND: select band. Configure `NBIOT_BAND` in `targets/bluepill_my_sensor/syscfg.yml`
+        send_command_int(dev, NBAND, MYNEWT_VAL(NBIOT_BAND))
     );
 }
 
 /// [Phase 1] Attach to network
 static bool attach_to_network(struct bc95g *dev) {
     return (        
-        //  NBAND: select band. Configure `NBIOT_BAND` in `targets/bluepill_my_sensor/syscfg.yml`
-        send_command_int(dev, NBAND, MYNEWT_VAL(NBIOT_BAND)) &&
+        //  At wakeup, skip the ERROR response and wait for OK.
+        wait_for_ok(dev) &&
 
-        //  CFUN: enable functions
-        send_command(dev, CFUN) &&
-        //send_command(dev, CFUN_QUERY) &&
+        //  CFUN_QUERY: query network function
+        send_command(dev, CFUN_QUERY) &&
+
+        //  CFUN_ENABLE: enable network function
+        send_command(dev, CFUN_ENABLE) &&
 
         //  CGATT: attach network
         send_command(dev, CGATT) &&
@@ -449,10 +535,25 @@ int bc95g_connect(struct bc95g *dev) {
     internal_timeout(BC95G_CONNECT_TIMEOUT);
     return (
         //  [Phase 0] Prepare to transmit
-        prepare_to_transmit(dev) &&
+        prepare_to_transmit(dev)
+    ) ? 0 : dev->last_error;
+}
 
+int bc95g_attach(struct bc95g *dev) {
+    //  Attach to the NB-IoT network.  Return 0 if successful.
+    internal_timeout(BC95G_CONNECT_TIMEOUT);
+    return (        
         //  [Phase 1] Attach to network
         attach_to_network(dev)
+    ) ? 0 : dev->last_error;
+}
+
+int bc95g_detach(struct bc95g *dev) {
+    //  Detach from the NB-IoT network.  Return 0 if successful.
+    internal_timeout(BC95G_CONNECT_TIMEOUT);
+    return (
+        //  CFUN_DISABLE: disable network function
+        send_command(dev, CFUN_DISABLE)
     ) ? 0 : dev->last_error;
 }
 
@@ -512,22 +613,27 @@ static bool send_hex(struct bc95g *dev, const uint8_t *data, uint16_t size) {
 static bool send_data(struct bc95g *dev, const uint8_t *data, uint16_t length, struct os_mbuf *mbuf) {
     if (data && length > 0) {
         //  Send the data buffer as hex digits.
+        assert(length * 3 < BC95G_TX_BUFFER_SIZE);  //  Need 3 chars per byte
         return send_hex(dev, data, length);
     }
     //  Send the mbuf chain.
     assert(mbuf);
-    uint32_t chain_size = OS_MBUF_PKTLEN(mbuf);  //  Length of the mbuf chain.
+    uint32_t chain_size = OS_MBUF_PKTLEN(mbuf);     //  Length of the mbuf chain.
+    assert(chain_size * 3 < BC95G_TX_BUFFER_SIZE);  //  Need 3 chars per byte
     const char *_f = "send mbuf";
     console_printf("%s%s %u...\n", _nbt, _f, (unsigned) chain_size);  console_flush();
     struct os_mbuf *m = mbuf;
     bool result = true;
+    uint32_t total_size = 0;
     while (m) {  //  Send each mbuf in the chain.
         const uint8_t *data = OS_MBUF_DATA(m, const uint8_t *);  //  Fetch the mbuf data.
         uint16_t size = m->om_len;  //  Fetch the size for the single mbuf.
         bool res = send_hex(dev, data, size);
         if (!res) { result = false; break; }
+        total_size += size;
         m = m->om_next.sle_next;   //  Fetch next mbuf in the list.
     }
+    assert(total_size == chain_size);  //  Make sure entire chain was transmitted.
     _log(_f, result);
     return result;
 }
@@ -537,12 +643,21 @@ static int send_tx_command(struct bc95g *dev, struct bc95g_socket *socket, const
     const uint8_t *data, uint16_t length, uint8_t sequence, struct os_mbuf *mbuf) {
     uint16_t local_port = socket->local_port;
     int local_port_response = -1, length_response = -1;
-    console_printf("AT> NSOST=%d,%s,%d,%d,\n", local_port, host, port, length);
+#ifdef TRANSMIT_FLAGS
+    console_printf("AT> NSOSTF=%d,%s,%d,%s,%d,\n", local_port, host, port, TRANSMIT_FLAGS, length);
+#else
+    console_printf("AT> NSOST=%d,%s,%d,%d,\n",     local_port, host, port, length);
+#endif  //  TRANSMIT_FLAGS
     internal_timeout(BC95G_SEND_TIMEOUT);
     bool res = (
         send_atp(dev) &&  //  Will pause between commands.
+#ifdef TRANSMIT_FLAGS
+        parser.printf("NSOSTF=%d,%s,%d,%s,%d,",
+            local_port, host, port, TRANSMIT_FLAGS, length) &&
+#else
         parser.printf("NSOST=%d,%s,%d,%d,",
             local_port, host, port, length) &&
+#endif  //  TRANSMIT_FLAGS
         send_data(dev, data, length, mbuf) &&
         parser.send(",%d", sequence) &&
         parser.recv("%d,%d", &local_port_response, &length_response) &&
