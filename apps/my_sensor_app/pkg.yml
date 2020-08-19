@@ -41,27 +41,6 @@ pkg.deps:
 #   "pkg.deps.xxx" refers to packages that should be included only if option "xxx" is
 #   enabled in targets/bluepill_my_sensor/syscfg.yml or apps/my_sensor_app/syscfg.yml
 
-# Bluetooth LE
-pkg.deps.BLUETOOTH_LE:
-    - "@apache-mynewt-nimble/nimble/controller"
-    - "@apache-mynewt-nimble/nimble/host"
-    - "@apache-mynewt-nimble/nimble/host/store/config"
-    - "@apache-mynewt-nimble/nimble/transport/ram"
-
-# Bluetooth Mesh
-pkg.deps.BLUETOOTH_MESH:
-    - "@apache-mynewt-core/encoding/base64"
-    - "@apache-mynewt-nimble/nimble/host/services/gap"
-    - "@apache-mynewt-nimble/nimble/host/services/gatt"
-
-# Low Power Support
-pkg.deps.LOW_POWER:
-    - "libs/low_power"                     #  Low Power Support for STM32 Blue Pill
-
-# Quectel L70-R GPS driver
-pkg.deps.GPS_L70R:
-    - "libs/gps_l70r"                      #  Quectel L70-R GPS driver
-
 # Quectel BC95-G NB-IoT driver
 pkg.deps.BC95G:
     - "libs/bc95g"                         #  Quectel BC95-G NB-IoT driver
@@ -92,8 +71,7 @@ pkg.deps.TEMP_STUB:
 
 # STM32F1 ADC driver (for internal temperature sensor)
 pkg.deps.ADC_1:
-#### TODO:    - "libs/adc_stm32f1"                   #  ADC driver for STM32F1, for internal temperature sensor
-    - "libs/adc_stm32l4"                   #  ADC driver for STM32L4, for internal temperature sensor
+    - "libs/adc_stm32f1"                   #  ADC driver for STM32F1, for internal temperature sensor
 
 # ESP8266 WiFi Driver
 pkg.deps.ESP8266:
@@ -111,11 +89,7 @@ pkg.deps.SEMIHOSTING_CONSOLE:
 #  C compiler flags
 pkg.cflags:
     - -DFLOAT_SUPPORT         #  For encoding floats in CoAP messages
-<<<<<<< HEAD
 #    - -Os                     #  Optimise for smallest size
-=======
-#   - -Os                     #  Optimise for smallest size
->>>>>>> origin/pinetime
 
 #  To test expansion of macros, enable both options below.  Expanded source code will appear at "bin" folder,
 #  like bin\targets\bluepill_my_sensor\app\libs\remote_sensor\libs\remote_sensor\src\remote_sensor.o
