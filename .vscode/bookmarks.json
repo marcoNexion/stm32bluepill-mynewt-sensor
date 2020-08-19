@@ -23,7 +23,7 @@
 		"path": "$ROOTPATH$/apps/my_sensor_app/pkg.yml",
 		"bookmarks": [
 			{
-				"line": 59,
+				"line": 71,
 				"column": 5,
 				"label": "pkg"
 			}
@@ -150,6 +150,191 @@
 			{
 				"line": 1,
 				"column": 5,
+				"label": ""
+			}
+		]
+	},
+	{
+		"path": "$ROOTPATH$/repos/apache-mynewt-core/hw/sensor/src/sensor.c",
+		"bookmarks": [
+			{
+				"line": 237,
+				"column": 15,
+				"label": ""
+			}
+		]
+	},
+	{
+		"path": "$ROOTPATH$/repos/apache-mynewt-core/kernel/os/src/os_callout.c",
+		"bookmarks": [
+			{
+				"line": 123,
+				"column": 7,
+				"label": ""
+			}
+		]
+	},
+	{
+		"path": "$ROOTPATH$/repos/apache-mynewt-core/kernel/os/src/os.c",
+		"bookmarks": [
+			{
+				"line": 140,
+				"column": 14,
+				"label": ""
+			}
+		]
+	},
+	{
+		"path": "$ROOTPATH$/repos/apache-mynewt-core/hw/mcu/nordic/nrf52xxx/src/hal_os_tick.c",
+		"bookmarks": [
+			{
+				"line": 139,
+				"column": 9,
+				"label": ""
+			}
+		]
+	},
+	{
+		"path": "$ROOTPATH$/repos/apache-mynewt-core/kernel/os/src/os_time.c",
+		"bookmarks": [
+			{
+				"line": 26,
+				"column": 15,
+				"label": ""
+			},
+			{
+				"line": 85,
+				"column": 11,
+				"label": ""
+			}
+		]
+	},
+	{
+		"path": "$ROOTPATH$/repos/apache-mynewt-core/hw/mcu/stm/stm32f1xx/src/ext/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rtc.c",
+		"bookmarks": [
+			{
+				"line": 165,
+				"column": 13,
+				"label": ""
+			}
+		]
+	},
+	{
+		"path": "$ROOTPATH$/repos/apache-mynewt-core/hw/mcu/stm/stm32f1xx/src/ext/Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal.c",
+		"bookmarks": [
+			{
+				"line": 64,
+				"column": 15,
+				"label": ""
+			}
+		]
+	},
+	{
+		"path": "$ROOTPATH$/repos/apache-mynewt-core/hw/mcu/stm/stm32l4xx/src/ext/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_uart.c",
+		"bookmarks": [
+			{
+				"line": 2,
+				"column": 15,
+				"label": ""
+			},
+			{
+				"line": 3179,
+				"column": 22,
+				"label": ""
+			}
+		]
+	},
+	{
+		"path": "$ROOTPATH$/repos/apache-mynewt-core/hw/mcu/stm/stm32_common/src/hal_uart.c",
+		"bookmarks": [
+			{
+				"line": 469,
+				"column": 20,
+				"label": ""
+			}
+		]
+	},
+	{
+		"path": "$ROOTPATH$/repos/apache-mynewt-core/hw/mcu/stm/stm32l4xx/src/ext/Drivers/CMSIS/Device/ST/STM32L4xx/Include/stm32l476xx.h",
+		"bookmarks": [
+			{
+				"line": 967,
+				"column": 10,
+				"label": ""
+			}
+		]
+	},
+	{
+		"path": "$ROOTPATH$/hw/bsp/stm32l4/bsp.yml",
+		"bookmarks": [
+			{
+				"line": 19,
+				"column": 14,
+				"label": ""
+			}
+		]
+	},
+	{
+		"path": "$ROOTPATH$/apps/my_sensor_app/src/device_composition.c",
+		"bookmarks": [
+			{
+				"line": 288,
+				"column": 16,
+				"label": ""
+			},
+			{
+				"line": 2548,
+				"column": 42,
+				"label": ""
+			},
+			{
+				"line": 2697,
+				"column": 34,
+				"label": ""
+			}
+		]
+	},
+	{
+		"path": "$ROOTPATH$/apps/my_sensor_app/src/app_gpio.c",
+		"bookmarks": [
+			{
+				"line": 74,
+				"column": 10,
+				"label": ""
+			}
+		]
+	},
+	{
+		"path": "$ROOTPATH$/apps/my_sensor_app/src/publisher.c",
+		"bookmarks": [
+			{
+				"line": 63,
+				"column": 18,
+				"label": ""
+			},
+			{
+				"line": 68,
+				"column": 7,
+				"label": ""
+			},
+			{
+				"line": 76,
+				"column": 21,
+				"label": ""
+			},
+			{
+				"line": 99,
+				"column": 29,
+				"label": ""
+			}
+		]
+	},
+	{
+		"path": "$ROOTPATH$/repos/apache-mynewt-nimble/apps/blemesh_models_example_2/src/publisher.c",
+		"bookmarks": [
+			{
+				"line": 63,
+				"column": 16,
 				"label": ""
 			}
 		]

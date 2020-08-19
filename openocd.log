@@ -1,22 +1,57 @@
-Open On-Chip Debugger 0.10.0
-Licensed under GNU GPL v2
-For bug reports, read
-	http://openocd.org/doc/doxygen/bugs.html
-Info : auto-selecting first available session transport "hla_swd". To override use 'transport select <transport>'.
-Info : The selected transport took over low-level target control. The results might differ compared to plain JTAG/SWD
-adapter speed: 1000 kHz
-adapter_nsrst_delay: 100
-none separate
-Info : Unable to match requested speed 1000 kHz, using 950 kHz
-Info : Unable to match requested speed 1000 kHz, using 950 kHz
-Info : clock speed 950 kHz
-Info : STLINK v2 JTAG v17 API v2 SWIM v4 VID 0x0483 PID 0x3748
-Info : using stlink api v2
-Info : Target voltage: 3.225943
-Info : stm32f1x.cpu: hardware has 6 breakpoints, 4 watchpoints
-Info : accepting 'gdb' connection on tcp/3333
-Info : device id = 0x20036410
-Warn : STM32 flash size failed, probe inaccurate - assuming 128k flash
+adapter_nsrst_assert_width: 100
+
+Info : CMSIS-DAP: SWD  Supported
+Info : CMSIS-DAP: JTAG Supported
+Info : CMSIS-DAP: FW Version = 2.0.0
+Info : CMSIS-DAP: Interface Initialised (JTAG)
+Info : SWCLK/TCK = 1 SWDIO/TMS = 1 TDI = 1 TDO = 0 nTRST = 0 nRESET = 1
+Info : CMSIS-DAP: Interface ready
+Info : clock speed 1000 kHz
+Info : cmsis-dap JTAG TLR_RESET
+Info : cmsis-dap JTAG TLR_RESET
+Info : JTAG tap: riscv.cpu tap/device found: 0x1e200a6d (mfg: 0x536 (Nuclei System Technology Co.,Ltd.), part: 0xe200, ver: 0x1)
+Info : JTAG tap: auto0.tap tap/device found: 0x790007a3 (mfg: 0x3d1 (GigaDevice Semiconductor (Beijing)), part: 0x9000, ver: 0x7)
+Warn : AUTO auto0.tap - use "jtag newtap auto0 tap -irlen 5 -expected-id 0x790007a3"
+Info : datacount=4 progbufsize=2
+Info : Exposing additional CSR 3040
+Info : Exposing additional CSR 3041
+Info : Exposing additional CSR 3042
+Info : Exposing additional CSR 3043
+Info : Exposing additional CSR 3044
+Info : Exposing additional CSR 3045
+Info : Exposing additional CSR 3046
+Info : Exposing additional CSR 3047
+Info : Exposing additional CSR 3048
+Info : Exposing additional CSR 3049
+Info : Exposing additional CSR 3050
+Info : Exposing additional CSR 3051
+Info : Exposing additional CSR 3052
+Info : Exposing additional CSR 3053
+Info : Exposing additional CSR 3054
+Info : Exposing additional CSR 3055
+Info : Exposing additional CSR 3056
+Info : Exposing additional CSR 3057
+Info : Exposing additional CSR 3058
+Info : Exposing additional CSR 3059
+Info : Exposing additional CSR 3060
+Info : Exposing additional CSR 3061
+Info : Exposing additional CSR 3062
+Info : Exposing additional CSR 3063
+Info : Exposing additional CSR 3064
+Info : Exposing additional CSR 3065
+Info : Exposing additional CSR 3066
+Info : Exposing additional CSR 3067
+Info : Exposing additional CSR 3068
+Info : Exposing additional CSR 3069
+Info : Exposing additional CSR 3070
+Info : Exposing additional CSR 3071
+Info : Examined RISC-V core; found 1 harts
+Info :  hart 0: XLEN=32, misa=0x40901105
+Info : Listening on port 6666 for tcl connections
+Info : Listening on port 4444 for telnet connections
+Info : accepting 'gdb' connection from pipe
+Info : device id = 0x19060410
+Info : flash_size_in_kb = 0x00000080
 Info : flash size = 128kbytes
-target halted due to debug-request, current mode: Thread 
-xPSR: 00000000 pc: 0x00000024 msp: 0x96f3b83c
+Info : [0] Found 4 triggers
+Info : dropped 'gdb' connection

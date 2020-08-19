@@ -6,6 +6,16 @@ set -e  #  Exit when any command fails.
 set -x  #  Echo all commands.
 #  echo $PATH
 
+#  Versions to install
+mynewt_version=mynewt_1_7_0_tag
+nimble_version=nimble_1_2_0_tag
+mcuboot_version=v1.3.1
+
+#  Previously:
+#  mynewt_version=mynewt_1_6_0_tag
+#  nimble_version=nimble_1_1_0_tag
+#  mcuboot_version=v1.3.0
+
 echo "***** Installing brew..."
 
 #  For Testing: Install brew locally.
@@ -35,9 +45,9 @@ fi
 
 echo "***** Installing openocd..."
 
-#  Install OpenOCD into the ./openocd folder.
+#  Install Arm version of OpenOCD into the ./openocd folder.
 if [ ! -e openocd/bin/openocd ]; then
-    if [ ! gnu-mcu-eclipse*tgz* ]; then
+    if [ -e gnu-mcu-eclipse*tgz* ]; then
         rm gnu-mcu-eclipse*tgz*
     fi
     wget https://github.com/gnu-mcu-eclipse/openocd/releases/download/v0.10.0-11-20190118/gnu-mcu-eclipse-openocd-0.10.0-11-20190118-1134-macos.tgz
@@ -46,6 +56,16 @@ if [ ! -e openocd/bin/openocd ]; then
     mv gnu-mcu-eclipse openocd
     mv openocd/openocd/*/* openocd
     rm -rf openocd/openocd
+fi
+
+#  Install RISC-V version of OpenOCD into the ./riscv-openocd folder.
+if [ ! -d riscv-openocd ]; then
+    git clone https://github.com/riscv-mcu/riscv-openocd
+    cd riscv-openocd
+    ./bootstrap
+    ./configure --enable-cmsis-dap --enable-ftdi
+    make
+    cd ..
 fi
 
 echo "***** Installing npm..."
@@ -83,6 +103,27 @@ if [ ! -d "${HOME}"/opt/gnu-mcu-eclipse/arm-none-eabi-gcc ]; then
 fi
 arm-none-eabi-gcc --version  #  Should show "gcc version 8.2.1 20181213" or later.
 
+echo "***** Installing RISC-V Toolchain..."
+
+#  Install RISC-V Toolchain into xPacks/riscv-none-embed-gcc/*/. From https://xpack.github.io/riscv-none-embed-gcc/, https://github.com/xpack-dev-tools/riscv-none-embed-gcc-xpack/releases/tag/v8.2.0-3.1/
+if [ ! -d xPacks/riscv-none-embed-gcc ]; then
+    #  Remove partial downloads.
+    if [ -d xPacks ]; then
+        rm -rf xPacks
+    fi
+    rm xpack-riscv-none-embed-gcc*tgz*
+    
+    wget https://github.com/xpack-dev-tools/riscv-none-embed-gcc-xpack/releases/download/v8.2.0-3.1/xpack-riscv-none-embed-gcc-8.2.0-3.1-darwin-x64.tgz
+    tar xf xpack-riscv-none-embed-gcc-8.2.0-3.1-darwin-x64.tgz
+    rm xpack-riscv-none-embed-gcc-8.2.0-3.1-darwin-x64.tgz
+    chmod -R -w xPacks/riscv-none-embed-gcc/*
+    # gccpath=`ls -d "${HOME}"/opt/xPacks/riscv-none-embed-gcc/*/bin`
+    # echo export PATH=\"$gccpath:\$PATH\" >> ~/.bashrc
+    # echo export PATH=\"$gccpath:\$PATH\" >> ~/.profile
+    # export PATH="$gccpath:$PATH"
+fi
+xPacks/riscv-none-embed-gcc/8.2.0-3.1/bin/riscv-none-embed-gcc --version  #  Should show "riscv-none-embed-gcc 8.2.0" or later.
+
 echo "***** Installing go..."
 
 #  Install go 1.10 to prevent newt build error: "go 1.10 or later is required (detected version: 1.2.X)"
@@ -118,7 +159,7 @@ if [ -e "${brewdir}"/bin/newt ]; then
     brew uninstall mynewt-newt -f
 fi
 
-#  Build newt mynewt_1_6_0_tag in /tmp/mynewt. Copy to /usr/local/bin.
+#  Build newt in /tmp/mynewt. Copy to /usr/local/bin.
 if [ ! -e /usr/local/bin/newt ]; then
     mynewtpath=/tmp/mynewt
     if [ -d $mynewtpath ]; then
@@ -127,7 +168,7 @@ if [ ! -e /usr/local/bin/newt ]; then
     mkdir $mynewtpath
     pushd $mynewtpath
 
-    git clone --branch mynewt_1_6_0_tag https://github.com/apache/mynewt-newt/
+    git clone --branch $mynewt_version https://github.com/apache/mynewt-newt/
     cd mynewt-newt/
     ./build.sh
     #  Should show: "Building newt.  This may take a minute..."
@@ -150,74 +191,18 @@ fi
 # fi
 
 which newt    #  Should show "/usr/local/bin/newt"
-newt version  #  Should show "Version: 1.6.0" or later.  Should NOT show "...-dev".
+newt version  #  Should show "Version: 1.7.0" or later.  Should NOT show "...-dev".
 
-echo "***** Installing mynewt..."
+# echo "***** Installing mynewt..."
 
-#  Remove the existing Mynewt OS in "repos"
-if [ -d repos ]; then
-    rm -rf repos
-fi
+# #  Remove the existing Mynewt OS in "repos"
+# if [ -d repos ]; then
+#     rm -rf repos
+# fi
 
-#  Download Mynewt OS into the current project folder, under "repos" subfolder.
-set +e              #  TODO: Remove this when newt install is fixed
-newt install -v -f  #  TODO: "git checkout" fails due to uncommitted files
-set -e              #  TODO: Remove this when newt install is fixed
-
-#  If you see "Error: Unknown subcommand: get-url"
-#  then upgrade git as shown above.
-
-echo "***** Reparing mynewt..."
-
-#  TODO: newt install fails due to uncommitted files. Need to check out manually.
-
-#  Check out core mynewt_1_6_0_tag.
-if [ -d repos/apache-mynewt-core ]; then
-    pushd repos/apache-mynewt-core
-    git checkout mynewt_1_6_0_tag -f
-    popd
-fi
-#  Check out nimble nimble_1_1_0_tag, which matches mynewt_1_6_0_tag.
-if [ -d repos/apache-mynewt-nimble ]; then
-    pushd repos/apache-mynewt-nimble
-    git checkout nimble_1_1_0_tag -f
-    popd
-fi
-#  Check out mcuboot v1.3.0, which matches mynewt_1_6_0_tag.
-if [ -d repos/mcuboot ]; then
-    pushd repos/mcuboot
-    git checkout v1.3.0 -f
-    popd
-fi
-
-#  If apache-mynewt-core is missing, then the installation failed.
-if [ ! -d repos/apache-mynewt-core ]; then
-    echo "***** newt install failed"
-    exit 1
-fi
-
-#  If apache-mynewt-nimble is missing, then the installation failed.
-if [ ! -d repos/apache-mynewt-nimble ]; then
-    echo "***** newt install failed"
-    exit 1
-fi
-
-echo "***** Patching mynewt with custom files..."
-
-#  Change the ROM layout to reduce bootloader size. Move application image to lower 64 KB ROM.
-if [ ! -e repos/apache-mynewt-core/hw/bsp/bluepill/bluepill.ld.old ]; then
-    cp repos/apache-mynewt-core/hw/bsp/bluepill/bluepill.ld \
-       repos/apache-mynewt-core/hw/bsp/bluepill/bluepill.ld.old
-fi
-cp patch/bluepill.ld \
-       repos/apache-mynewt-core/hw/bsp/bluepill/bluepill.ld
-
-if [ ! -e repos/apache-mynewt-core/hw/bsp/bluepill/bsp.yml.old ]; then
-    cp repos/apache-mynewt-core/hw/bsp/bluepill/bsp.yml \
-       repos/apache-mynewt-core/hw/bsp/bluepill/bsp.yml.old
-fi
-cp patch/bsp.yml \
-       repos/apache-mynewt-core/hw/bsp/bluepill/bsp.yml
+# #  Download Mynewt OS into the current project folder, under "repos" subfolder.
+# newt install -v -f
+# echo ✅ ◾ ️Done! See README.md for Mynewt type conversion build fixes. Please restart Visual Studio Code to activate the extensions
 
 set +x  #  Stop echoing all commands.
 echo ✅ ◾ ️Done! Please restart Visual Studio Code to activate the extensions

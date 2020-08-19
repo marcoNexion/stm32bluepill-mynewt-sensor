@@ -19,13 +19,50 @@
 #
 -->
 
-# Visual Embedded Rust Sensor Application for NB-IoT based on Quectel BC95-G NB-IoT Module, STM32 Blue Pill and Apache Mynewt
+# PineTime Smart Watch Firmware with Apache Mynewt and Embedded Rust
 
-Refer to the tutorials...
+## Note: PineTime code has been moved here: https://github.com/lupyuen/pinetime-rust-mynewt
 
-[_Visual Embedded Rust Programming with Visual Studio Code_](https://medium.com/@ly.lee/visual-embedded-rust-programming-with-visual-studio-code-1bc1262e398c?sk=222de63e45993aacd0db5a2e4b1f33c7)
+This `pinetime` branch contains the firmware source code for PineTime Smart Watch with Apache Mynewt and Embedded Rust. Refer to the articles...
 
-[_Rust Rocks NB-IoT! STM32 Blue Pill with Quectel BC95-G on Apache Mynewt_](https://medium.com/@ly.lee/rust-rocks-nb-iot-stm32-blue-pill-with-quectel-bc95-g-on-apache-mynewt-ef62a7e28f7e?sk=aaa21371f68a07c543066b6b89a760f0)
+1. [_Sneak Peek of PineTime Smart Watch… And why it's perfect for teaching IoT_](https://medium.com/swlh/sneak-peek-of-pinetime-smart-watch-and-why-its-perfect-for-teaching-iot-81b74161c159?source=friends_link&sk=d9301466f5499bece3e7b638e99ec20d)
+
+1. [_Building a Rust Driver for PineTime’s Touch Controller_](https://medium.com/@ly.lee/building-a-rust-driver-for-pinetimes-touch-controller-cbc1a5d5d3e9?source=friends_link&sk=d8cf73fc943d9c0e960627d768f309cb)
+
+The code structure is similar to the earlier article on nRF52...
+
+[_Coding nRF52 with Rust and Apache Mynewt on Visual Studio Code_](https://medium.com/@ly.lee/coding-nrf52-with-rust-and-apache-mynewt-on-visual-studio-code-9521bcba6004?source=friends_link&sk=bb4e2523b922d0870259ab3fa696c7da)
+
+# Fixes for Mynewt type conversion build warnings
+
+These fixes should be applied manually when upgrading Mynewt or installing Mynewt from scratch.
+
+1️⃣ `repos/apache-mynewt-core/kernel/os/include/os/os_mutex.h` line 122 <br>
+```C
+    return mu->mu_level;
+```
+Change to
+```C
+    return (os_error_t) mu->mu_level;
+```
+
+2️⃣ `repos/apache-mynewt-core/hw/sensor/include/sensor/sensor.h` line 847 <br>
+```C
+    return (sensor->s_types & sensor->s_mask & type);
+```
+Change to
+```C
+    return (sensor_type_t) (sensor->s_types & sensor->s_mask & type);
+```
+
+3️⃣ `repos/apache-mynewt-core/encoding/tinycbor/include/tinycbor/cbor.h` line 201 <br>
+```C
+    {   return encoder->writer->bytes_written; }
+```
+Change to
+```C
+    {   return (CborError) encoder->writer->bytes_written; }
+```
 
 # Installation, Build, Flash and Debug Logs
 
@@ -45,17 +82,33 @@ This repository contains...
 
 [`boot_stub`](apps/boot_stub): Mynewt Bootloader Stub
 
-[`adc_stm32f1`](libs/adc_stm32f1): Mynewt Driver for ADC on STM32F1
+[`adc_stm32f1`](libs/adc_stm32f1): Mynewt Driver for ADC on STM32 F103 (Blue Pill). Used by `temp_stm32` internal temperature sensor.
 
-[`custom_sensor`](libs/custom_sensor): Custom Sensor Definitions
+[`adc_stm32l4`](libs/adc_stm32l4): Mynewt Driver for ADC on STM32 L476. Used by `temp_stm32` internal temperature sensor.
 
-[`esp8266`](libs/esp8266): Mynewt Driver for ESP8266
+[`bc95g`](libs/bc95g): Mynewt Driver for Quectel BC95 NB-IoT module
+
+[`buffered_serial`](libs/buffered_serial): Buffered Serial Library used by `bc95g` NB-IoT driver and `gps_l70r` GPS driver
+
+[`custom_sensor`](libs/custom_sensor): Custom Sensor Definitions for Raw Temperature and Geolocation
+
+[`esp8266`](libs/esp8266): Mynewt Driver for ESP8266 WiFi module
+
+[`gps_l70r`](libs/gps_l70r): Mynewt Driver for Quectel L70-R GPS module
 
 [`hmac_prng`](libs/hmac_prng): HMAC pseudorandom number generator with entropy based on internal temperature sensor
+
+[`low_power`](libs/low_power): Low Power functions for STM32 F103 (Blue Pill)
+
+[`mynewt_rust`](libs/mynewt_rust): Helper functions for hosting Rust on Mynewt
 
 [`nrf24l01`](libs/nrf24l01): Mynewt Driver for nRF24L01
 
 [`remote_sensor`](libs/remote_sensor): Mynewt Driver for Remote Sensor
+
+[`rust_app`](libs/rust_app): Stub library that will be replaced by the compiled Rust application and Rust crates
+
+[`rust_libcore`](libs/rust_libcore): Stub library that will be replaced by the Rust Core Library
 
 [`semihosting_console`](libs/semihosting_console): Mynewt Console for Arm Semihosting
 
@@ -64,6 +117,10 @@ This repository contains...
 [`sensor_network`](libs/sensor_network): Sensor Network Library
 
 [`temp_stm32`](libs/temp_stm32): Mynewt Driver for Internal Temperature Sensor on STM32
+
+[`temp_stub`](libs/temp_stub): Mynewt Driver for Stub Temperature Sensor that returns a fixed value
+
+[`tiny_gps_plus`](libs/tiny_gps_plus): TinyGPS++ Library ported from Arduino. Used by `gps_l70r` GPS driver.
 
 [`scripts`](scripts): Install, build and deploy scripts
 
@@ -114,7 +171,7 @@ project.repositories:
 
 repository.apache-mynewt-core:
     type: github
-    vers: 1.6.0
+    vers: 1.7.0
     user: apache
     repo: mynewt-core
 ```
