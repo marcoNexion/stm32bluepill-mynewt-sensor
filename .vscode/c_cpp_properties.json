@@ -42,7 +42,8 @@
             "compilerPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/9 2020-q2-update/bin/arm-none-eabi-gcc",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "gcc-x64"
+            "intelliSenseMode": "gcc-x64",
+            "compileCommands": "${workspaceFolder}/bin/targets/stm32l4_my_sensor/app/apps/my_sensor_app/compile_commands.json"
         }
     ],
     "version": 4

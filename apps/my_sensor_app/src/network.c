@@ -49,7 +49,7 @@ int send_sensor_data(struct sensor_value *val) {
     bool rc = init_server_post(NULL);
     if (!rc) { return SYS_EAGAIN; }  //  If network transport not ready, tell caller (Sensor Listener) to try again later.
 
-    assert(false);  //  TODO: Call sensor_network_prepare_post() in CP_ROOT
+    //assert(false);  //  TODO: Call sensor_network_prepare_post() in CP_ROOT
 
     //  Compose the CoAP Payload in JSON using the CP macros.
     CP_ROOT({                     //  Create the payload root
@@ -68,7 +68,8 @@ int send_sensor_data(struct sensor_value *val) {
     //  message to the background task, we release a semaphore that unblocks other requests
     //  to compose and post CoAP messages.
     rc = do_server_post();  assert(rc);
-    console_printf("NET view your sensor at \nhttps://blue-pill-geolocate.appspot.com?device=%s\n", device_id);
+    //console_printf("NET view your sensor at \nhttps://blue-pill-geolocate.appspot.com?device=%s\n", device_id);
+    console_printf("NET sensor data should be post. device=%s\n", device_id);
 
     //  The CoAP Background Task will call oc_tx_ucast() in the network driver to transmit the message.
     return 0;

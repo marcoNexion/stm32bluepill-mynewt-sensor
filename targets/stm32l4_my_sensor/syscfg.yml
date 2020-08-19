@@ -50,13 +50,13 @@ syscfg.vals:
     SENSOR_VALUE_TYPE: SENSOR_VALUE_TYPE_INT32
 
     # Poll the sensor every 10,000 milliseconds (10 seconds)
-    SENSOR_POLL_TIME:  10 * 1000
+    SENSOR_POLL_TIME:  25 * 1000
 
     ###########################################################################
     # Network Settings
 
     NBIOT_BAND:             20  # Connect to this NB-IoT band
-    SENSOR_NETWORK:         1  # Enable Sensor Network library
+    SENSOR_NETWORK:         0  # Enable Sensor Network library
     SENSOR_COAP:            1  # Send sensor data to CoAP server
     COAP_JSON_ENCODING:     1  # Use JSON to encode CoAP payload for forwarding to thethings.io
     RAW_TEMP:               1  # Use raw temperature (integer) instead of floating-point temperature values, to reduce ROM size
@@ -69,3 +69,10 @@ syscfg.vals:
     TEMP_STM32:             0  # Disable Blue Pill internal temperature sensor
     ADC_1:                  0  # Disable port ADC1
     HMAC_PRNG:              0  # Disable HMAC PRNG pseudorandom number generator
+
+
+    ###########################################################################
+    # Debug Settings
+    CONSOLE_TICKS:          1 #description: 'Print OS Ticks'
+    MCU_DEBUG_IGNORE_BKPT:  1
+
