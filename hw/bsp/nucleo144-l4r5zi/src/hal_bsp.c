@@ -23,54 +23,9 @@
 #include <hal/hal_spi.h>
 #endif
 
-#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2)
 #include <uart/uart.h>
 #include <uart_hal/uart_hal.h>
-#endif
-
-
-#if MYNEWT_VAL(UART_0) 
-static struct uart_dev hal_uart_bc95;
-
-static const struct stm32_uart_cfg uart_bc95_cfg = {
-#if 0
-    .suc_uart = USART1,
-    .suc_rcc_reg = &RCC->APB2ENR,
-    .suc_rcc_dev = RCC_APB2ENR_USART1EN,
-    .suc_pin_tx = MCU_GPIO_PORTD(8),
-    .suc_pin_rx = MCU_GPIO_PORTD(9),
-    .suc_pin_rts = -1,
-    .suc_pin_cts = -1,
-    .suc_pin_af = GPIO_AF7_USART1,
-    .suc_irqn = USART1_IRQn
-
-#endif
-
-#if 0
-    .suc_uart = USART2,
-    .suc_rcc_reg = &RCC->APB1ENR1,
-    .suc_rcc_dev = RCC_APB1ENR1_USART2EN,
-    .suc_pin_tx = MCU_GPIO_PORTD(8),
-    .suc_pin_rx = MCU_GPIO_PORTD(9),
-    .suc_pin_rts = -1,
-    .suc_pin_cts = -1,
-    .suc_pin_af = GPIO_AF7_USART2,
-    .suc_irqn = USART2_IRQn
-#endif
-
-#if 1
-    .suc_uart = USART3,
-    .suc_rcc_reg = &RCC->APB1ENR1,
-    .suc_rcc_dev = RCC_APB1ENR1_USART3EN,
-    .suc_pin_tx = MCU_GPIO_PORTD(8),
-    .suc_pin_rx = MCU_GPIO_PORTD(9),
-    .suc_pin_rts = -1,
-    .suc_pin_cts = -1,
-    .suc_pin_af = GPIO_AF7_USART3,
-    .suc_irqn = USART3_IRQn
-#endif
-
-};
 #endif
 
 #if MYNEWT_VAL(UART_1)
@@ -89,7 +44,66 @@ static const struct stm32_uart_cfg uart_dbg_cfg = {
 };
 #endif
 
+#if MYNEWT_VAL(UART_0)
 
+static struct uart_dev hal_uart_bc95;
+
+static const struct stm32_uart_cfg uart_bc95_cfg = {
+#if 0
+    //doesn't work on USART1 channel...
+    //TODO : fix it !!!
+    .suc_uart = USART1,
+    .suc_rcc_reg = &RCC->APB2ENR,
+    .suc_rcc_dev = RCC_APB2ENR_USART1EN,
+    .suc_pin_tx = MCU_GPIO_PORTG(9),
+    .suc_pin_rx = MCU_GPIO_PORTG(10),
+    .suc_pin_rts = -1,
+    .suc_pin_cts = -1,
+    .suc_pin_af = GPIO_AF7_USART1,
+    .suc_irqn = USART1_IRQn
+#else
+    .suc_uart = USART2,
+    .suc_rcc_reg = &RCC->APB1ENR1,
+    .suc_rcc_dev = RCC_APB1ENR1_USART2EN,
+    .suc_pin_tx = MCU_GPIO_PORTA(2),
+    .suc_pin_rx = MCU_GPIO_PORTA(3),
+    .suc_pin_rts = -1,
+    .suc_pin_cts = -1,
+    .suc_pin_af = GPIO_AF7_USART2,
+    .suc_irqn = USART2_IRQn
+#endif
+
+};
+#endif
+
+#if MYNEWT_VAL(UART_2)
+static struct uart_dev hal_uart_gps_cfg;
+
+static const struct stm32_uart_cfg uart_gps_cfg = {
+#if 0    
+    .suc_uart = USART3,
+    .suc_rcc_reg = &RCC->APB1ENR1,
+    .suc_rcc_dev = RCC_APB1ENR1_USART3EN,
+    .suc_pin_tx = MCU_GPIO_PORTD(8),
+    .suc_pin_rx = MCU_GPIO_PORTD(9),
+    .suc_pin_rts = -1,
+    .suc_pin_cts = -1,
+    .suc_pin_af = GPIO_AF7_USART3,
+    .suc_irqn = USART3_IRQn
+#else
+    .suc_uart = USART3,
+    .suc_rcc_reg = &RCC->APB1ENR1,
+    .suc_rcc_dev = RCC_APB1ENR1_USART3EN,
+    .suc_pin_tx = MCU_GPIO_PORTD(8),
+    .suc_pin_rx = MCU_GPIO_PORTD(9),
+    .suc_pin_rts = -1,
+    .suc_pin_cts = -1,
+    .suc_pin_af = GPIO_AF7_USART3,
+    .suc_irqn = USART3_IRQn
+    
+#endif
+};
+#endif
 
 /** What memory to include in coredump. */
 static const struct hal_bsp_mem_dump dump_cfg[] = {
@@ -188,16 +202,17 @@ void hal_system_clock_start(void){
     RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
     RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
     RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
     if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK) {
         assert(0);
     }
 
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1 | RCC_PERIPHCLK_USART2 | RCC_PERIPHCLK_LPUART1 | RCC_PERIPHCLK_USB;
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1| RCC_PERIPHCLK_USART2 | RCC_PERIPHCLK_USART3 | RCC_PERIPHCLK_LPUART1 | RCC_PERIPHCLK_USB;
     PeriphClkInit.Lpuart1ClockSelection = RCC_LPUART1CLKSOURCE_PCLK1;
     PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
     PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
+    PeriphClkInit.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
     PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLLSAI1;
     PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_MSI;
     PeriphClkInit.PLLSAI1.PLLSAI1M = 1;
@@ -216,6 +231,8 @@ void hal_system_clock_start(void){
 
 
     HAL_RCC_MCOConfig( RCC_MCO1, RCC_MCO1SOURCE_SYSCLK, RCC_MCODIV_8);
+
+
 }
 
 
@@ -232,15 +249,21 @@ hal_bsp_init(void)
     /* Make sure system clocks have started. */
     hal_system_clock_start();
 
+#if MYNEWT_VAL(UART_1)
+    rc = os_dev_create((struct os_dev *) &hal_uart_dbg, "uart1",
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_dbg_cfg);
+    assert(rc == 0);
+#endif
+
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &hal_uart_bc95, "uart0",
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_bc95_cfg);
     assert(rc == 0);
 #endif
 
-#if MYNEWT_VAL(UART_1)
-    rc = os_dev_create((struct os_dev *) &hal_uart_dbg, "uart1",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_dbg_cfg);
+#if MYNEWT_VAL(UART_2)
+    rc = os_dev_create((struct os_dev *) &hal_uart_gps_cfg, "uart2",
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_gps_cfg);
     assert(rc == 0);
 #endif
 

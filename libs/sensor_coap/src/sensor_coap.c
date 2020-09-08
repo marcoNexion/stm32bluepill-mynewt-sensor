@@ -159,29 +159,20 @@ free_rsp:
     return false;
 }
 
-///  Create a new sensor post request to send to CoAP server. Return true if successful.
+///  Create a new sensor post request to send to CoAP server.
 bool
-init_sensor_post(struct oc_server_handle *server)
-{
-    assert(oc_sensor_coap_ready);  assert(server);
-    //  Lock the semaphore for preparing the CoAP request.
-    os_error_t rc = os_sem_pend(&oc_sem, OS_TIMEOUT_NEVER);  //  Allow only 1 task to be creating a sensor request at any time.
-    assert(rc == OS_OK);
-    return true;
-}
-
-///  Prepare the new sensor post request for writing the payload. 
-///  coap_content_format is APPLICATION_JSON or APPLICATION_CBOR. If coap_content_format is 0, use the default format.
-///  Return true if successful.
-bool
-prepare_sensor_post(struct oc_server_handle *server, const char *uri, int coap_content_format)
+init_sensor_post(struct oc_server_handle *server, const char *uri, int coap_content_format)
 {
     assert(oc_sensor_coap_ready);  assert(server);  assert(uri);
 #ifdef COAP_CONTENT_FORMAT
     //  If content format is not specified, select the default.
     if (coap_content_format == 0) { coap_content_format = COAP_CONTENT_FORMAT; }
 #endif  //  COAP_CONTENT_FORMAT
-    assert(coap_content_format != 0);  //  CoAP Content Format must be specified
+    assert(coap_content_format != 0);  //  CoAP Content Format not specified
+
+    //  Lock the semaphore for preparing the CoAP request.
+    os_error_t rc = os_sem_pend(&oc_sem, OS_TIMEOUT_NEVER);  //  Allow only 1 task to be creating a sensor request at any time.
+    assert(rc == OS_OK);
 
     oc_content_format = coap_content_format;
     oc_qos_t qos = LOW_QOS;  //  Default to low QoS, no transactions.
@@ -191,7 +182,7 @@ prepare_sensor_post(struct oc_server_handle *server, const char *uri, int coap_c
 
     cb = oc_ri_alloc_client_cb(uri, server, OC_POST, handler, qos);
     if (!cb) {
-        os_error_t rc = os_sem_release(&oc_sem);  //  Failed.  Release the semaphore.
+        rc = os_sem_release(&oc_sem);  //  Failed.  Release the semaphore.
         assert(rc == OS_OK);
         return false;
     }
@@ -323,16 +314,16 @@ json_encode_value_ext(struct json_encoder *encoder, struct json_value *jv)
 
     switch (jv->jv_type) {
         case JSON_VALUE_TYPE_EXT_FLOAT: {
-            //  Encode the float with 6 decimal places.
+            //  Encode the float with 2 decimal places.
             bool neg; int i, d;
             float f = jv->jv_val.fl;
-            split_float(f, &neg, &i, &d);  //  Split the float into neg, integer and decimal parts (6 decimal places)
+            split_float(f, &neg, &i, &d);  //  Split the float into neg, integer and decimal parts (two decimal places)
             len = sprintf(
                 encoder->je_encode_buf,
-                "%s%d.%06d",
+                "%s%d.%02d",
                 neg ? "-" : "",  //  Sign
                 i, //  Integer part
-                d  //  6 decimal places
+                d  //  2 decimal places
             );
             encoder->je_write(encoder->je_arg, encoder->je_encode_buf, len);
             break;
@@ -348,12 +339,12 @@ err:
     return (rc);
 }
 
-///  Split the float f into 3 parts: neg is true if negative, the absolute integer part i, and the decimal part d, with 6 decimal places.
+///  Split the float f into 3 parts: neg is true if negative, the absolute integer part i, and the decimal part d, with 2 decimal places.
 static void split_float(float f, bool *neg, int *i, int *d) {
     *neg = (f < 0.0f);                    //  True if f is negative
     float f_abs = *neg ? -f : f;          //  Absolute value of f
     *i = (int) f_abs;                     //  Integer part
-    *d = ((int) (1000000.0f * f_abs)) % 1000000;  //  Six decimal places
+    *d = ((int) (100.0f * f_abs)) % 100;  //  Two decimal places
 }
 
 #endif  //  MYNEWT_VAL(COAP_JSON_ENCODING)

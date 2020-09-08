@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 //  Poll the temperature sensor every 10 seconds. Transmit the sensor data to the CoAP server after polling.
 
 //  Configure SENSOR_DEVICE and  SENSOR_POLL_TIME by editing `targets/bluepill_my_sensor/syscfg.yml`
@@ -25,46 +24,53 @@
 #include <os/os.h>            //  For Mynewt OS functions
 #include <console/console.h>  //  For Mynewt console output. Actually points to libs/semihosting_console
 #include <sensor/sensor.h>    //  For Mynewt Sensor Framework
-#include <sensor/temperature.h>             //  For temperature sensor definitions
 #include <sensor_network/sensor_network.h>  //  For Sensor Network Library
 #include <sensor_coap/sensor_coap.h>        //  For sensor_value
-#include <custom_sensor/custom_sensor.h>    //  For sensor_temp_raw_data
 #include "network.h"                        //  For send_sensor_data()
-#include "sensor.h"
+#include <custom_sensor/custom_sensor.h>    //  For sensor_temp_raw_data
+#include "position.h"
+#include "gps_neo6m/gps_neo6m.h"
 
 //  Defined later below
-static int handle_sensor_data(struct sensor* sensor, void *arg, void *sensor_data, sensor_type_t type);
+static int handle_position_data(struct sensor* sensor, void *arg, void *sensor_data, sensor_type_t type);
 
 //  Define the listener function to be called after polling the temperature sensor.
 static struct sensor_listener listener = {
-    .sl_sensor_type = SENSOR_TYPE_AMBIENT_TEMPERATURE_RAW,  //  Type of sensor: raw ambient temperature (integer)
-    .sl_func        = handle_sensor_data,                   //  Listener function to be called with the sensor data
+    .sl_sensor_type = SENSOR_TYPE_GEOLOCATION,  //  Type of sensor: raw ambient temperature (integer)
+    .sl_func        = handle_position_data,                   //  Listener function to be called with the sensor data
     .sl_arg         = NULL,
 };
 
-int start_sensor_listener(void) {
-    //  Ask Mynewt to poll the temperature sensor every 10 seconds and call `handle_sensor_data()`.
+int start_position_listener(void) {
+    //  Ask Mynewt to poll the position sensor every 10 seconds and call `handle_position_data()`.
     //  Return 0 if successful.
-    if (strlen(MYNEWT_VAL(SENSOR_DEVICE)) == 0) { return 0; }  //  Sensor device not defined.
-    console_printf("TMP poll %s\n", MYNEWT_VAL(SENSOR_DEVICE));
+    if (strlen(MYNEWT_VAL(GPS_DEVICE)) == 0) { return 0; }  //  Sensor device not defined.
+    console_printf("POS get %s\n", MYNEWT_VAL(GPS_DEVICE));
 
+#if 1
     //  Set the sensor polling time to 10 seconds.  SENSOR_DEVICE is "temp_stm32_0", SENSOR_POLL_TIME is 10,000.
-    int rc = sensor_set_poll_rate_ms(MYNEWT_VAL(SENSOR_DEVICE), MYNEWT_VAL(SENSOR_POLL_TIME));
+    int rc = sensor_set_poll_rate_ms(MYNEWT_VAL(GPS_DEVICE), MYNEWT_VAL(GPS_POLL_TIME));
     assert(rc == 0);
+#endif
 
     //  Fetch the sensor by name, without locking the driver for exclusive access.
-    struct sensor *listen_sensor = sensor_mgr_find_next_bydevname(MYNEWT_VAL(SENSOR_DEVICE), NULL);
-    assert(listen_sensor != NULL);
+    struct sensor *listen_position = sensor_mgr_find_next_bydevname(MYNEWT_VAL(GPS_DEVICE), NULL);
+    assert(listen_position != NULL);
 
     //  Set the Listener Function to be called every 10 seconds, with the polled sensor data.
-    rc = sensor_register_listener(listen_sensor, &listener);
+    rc = sensor_register_listener(listen_position, &listener);
     assert(rc == 0);
+
+    rc = gps_neo6m_start();
+    assert(rc == 0);
+    
     return 0;
 }
 
-static int handle_sensor_data(struct sensor* sensor, void *arg, void *sensor_data, sensor_type_t type) {
+static int handle_position_data(struct sensor* sensor, void *arg, void *sensor_data, sensor_type_t type) {
     //  This listener function is called every 10 seconds by Mynewt to handle the polled sensor data.
     //  Return 0 if we have handled the sensor data successfully.
+#if 0
     if (sensor_data == NULL) { return SYS_EINVAL; }                  //  Exit if data is missing
     assert(sensor && type == SENSOR_TYPE_AMBIENT_TEMPERATURE_RAW);   //  We only support raw temperature (integer).
 
@@ -87,5 +93,22 @@ static int handle_sensor_data(struct sensor* sensor, void *arg, void *sensor_dat
     //  SYS_EAGAIN means that the network is still starting up. We send at the next poll.
     if (rc == SYS_EAGAIN) { return 0; }
     assert(rc == 0);
+#endif
+    int rc;
+
+    volatile static char *nmea;
+
+    nmea = (char*)sensor_data;
+
+    int nmea_size;
+
+    nmea_size=strlen((const char*)nmea);
+
+    if(nmea_size>0)
+        rc = 0;
+    else
+        rc = -1;
+    
     return rc;
+
 }

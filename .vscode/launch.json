@@ -7,15 +7,13 @@
         {
           "type": "pickString",
           "id": "targetSelector",
-          "description": "Select a target?",
+          "description": "Select an application running on stm32l4_my_sensor?",
           "options": [
-            "bluepill_boot",
-            "bluepill_my_sensor",
-            "my_blinky_sim",
-            "stm32l4_boot",
+            "only_position_app",
+            "my_position_app",
             "stm32l4_my_sensor"
           ],
-          "default": "stm32l4_my_sensor"
+          "default": "only_position_app"
         }],
 
     "configurations":[
@@ -23,7 +21,7 @@
                 "name":"Debug w/ ST-LINK-V2",
                 "type":"cppdbg",
                 "request":"launch",
-                "program":"${workspaceRoot}\\bin\\targets\\${input:targetSelector}\\app\\apps\\my_sensor_app\\my_sensor_app.elf",
+                "program":"${workspaceRoot}\\bin\\targets\\stm32l4_my_sensor\\app\\apps\\${input:targetSelector}\\${input:targetSelector}.elf",
                 "args":[],
                 "stopAtEntry":true,
                 "cwd":"${workspaceRoot}",
@@ -36,7 +34,7 @@
                 "serverStarted":"target halted due to debug-request, current mode: Thread",
                 "setupCommands":[
                     {
-                        "text":"-environment-cd ${workspaceRoot}\\bin\\targets\\${input:targetSelector}\\app\\apps\\my_sensor_app\\"
+                        "text":"-environment-cd ${workspaceRoot}\\bin\\targets\\stm32l4_my_sensor\\app\\apps\\${input:targetSelector}\\"
                     },
                     {
                         "text":"-target-select remote localhost:3333",
@@ -49,7 +47,7 @@
                         "ignoreFailures":false
                     },
                     {
-                        "text":"-file-exec-and-symbols my_sensor_app.elf",
+                        "text":"-file-exec-and-symbols ${input:targetSelector}.elf",
                         "description":"load file",
                         "ignoreFailures":false
                     },

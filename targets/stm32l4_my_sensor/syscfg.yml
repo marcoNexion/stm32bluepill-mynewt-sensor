@@ -32,50 +32,41 @@ syscfg.vals:
     COAP_PORT:      5683
 
     # CoAP URI e.g. v2/things/IVRiBCcR6HPp_CcZIFfOZFxz_izni5xc_KO-kgSA2Y8 (for thethings.io, the last part is the Thing Token)
-    COAP_URI:       '"basic"'
+    COAP_URI:       '"advanced"'
 
     ###########################################################################
-<<<<<<< HEAD
     # Sensor Settings
 
     # Sensor device is the Stub Temperature Sensor
-    SENSOR_DEVICE:     MYNEWT_VAL(TEMP_STUB_DEVICE)
+    # SENSOR_DEVICE:     MYNEWT_VAL(TEMP_STUB_DEVICE)
 
     # Sensor value will be sent as field name `t`
-    SENSOR_KEY:        '"t"'
+    # SENSOR_KEY:        '"t"'
 
     # Type of sensor is raw ambient temperature
-    SENSOR_TYPE:       SENSOR_TYPE_AMBIENT_TEMPERATURE_RAW
+    # SENSOR_TYPE:       SENSOR_TYPE_AMBIENT_TEMPERATURE_RAW
 
     # Raw temperature sensor value is an integer (0 to 4095)
-    SENSOR_VALUE_TYPE: SENSOR_VALUE_TYPE_INT32
+    # SENSOR_VALUE_TYPE: SENSOR_VALUE_TYPE_INT32
 
     # Poll the sensor every 10,000 milliseconds (10 seconds)
-    SENSOR_POLL_TIME:  25 * 1000
+    # SENSOR_POLL_TIME:  15 * 1000
 
     ###########################################################################
     # Network Settings
 
     NBIOT_BAND:             20  # Connect to this NB-IoT band
     SENSOR_NETWORK:         0  # Enable Sensor Network library
-=======
-    # Network Settings
-
-    DEVICE_TYPE:            '"l476"'  # Device type that will be prepended to the Device ID. thethings.io converts the raw temperature depending on the device type.
-    NBIOT_BAND:             8  # Connect to this NB-IoT band
-    SENSOR_NETWORK:         1  # Enable Sensor Network library
->>>>>>> origin/pinetime
     SENSOR_COAP:            1  # Send sensor data to CoAP server
-    COAP_CBOR_ENCODING:     0  # Disable CBOR encoding of CoAP payload
     COAP_JSON_ENCODING:     1  # Use JSON to encode CoAP payload for forwarding to thethings.io
+    COAP_CBOR_ENCODING:     0
     RAW_TEMP:               1  # Use raw temperature (integer) instead of floating-point temperature values, to reduce ROM size
 
     ###########################################################################
     # Hardware Settings
      
-<<<<<<< HEAD
     BC95G:                  1  # Enable Quectel BC95-G NB-IoT driver    
-    TEMP_STUB:              1  # Enable stub temperature sensor
+    TEMP_STUB:              0  # Enable stub temperature sensor
     TEMP_STM32:             0  # Disable Blue Pill internal temperature sensor
     ADC_1:                  0  # Disable port ADC1
     HMAC_PRNG:              0  # Disable HMAC PRNG pseudorandom number generator
@@ -86,24 +77,3 @@ syscfg.vals:
     CONSOLE_TICKS:          1 #description: 'Print OS Ticks'
     MCU_DEBUG_IGNORE_BKPT:  1
 
-=======
-    HARDFLOAT:              1  # Enable hardware floating-point support for STM32L476RC
-    LOW_POWER:              0  # Disable low power support
-
-    UART_0:                 1  # Enable USART2 for GPS module
-    UART_1:                 0  # Disable USART1
-    UART_2:                 1  # Enable USART3 for NB-IoT module
-    UART_2_SWAP_TXRX:       1  # Swap TX/RX pins for USART3 so that USART3 behaves like LPUART1
-
-    GPS_L70R:               1  # Enable driver for Quectel L70R GPS module
-    GPS_L70R_UART:          0  # Connect to Quectel L70R module on USART2
-    GPS_L70R_ENABLE_PIN:    MCU_GPIO_PORTA(1)  # GPIO Pin PA1 enables and disables the GPS module. Set to -1 for no pin.
-
-    BC95G:                  1  # Enable driver for Quectel BC95-G NB-IoT module
-    BC95G_UART:             2  # Connect to Quectel BC95-G module on LPUART1 i.e. USART3 with TX/RX pins swapped
-    BC95G_ENABLE_PIN:       MCU_GPIO_PORTA(0)  # GPIO Pin PA0 enables and disables the NB-IoT module. Set to -1 for no pin.
-
-    ADC_1:                  1  # Enable port ADC1
-    TEMP_STM32:             1  # Enable STM32 internal temperature sensor
-    HMAC_PRNG:              1  # Enable HMAC PRNG pseudorandom number generator
->>>>>>> origin/pinetime

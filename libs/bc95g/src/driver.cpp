@@ -43,6 +43,9 @@
 //  0x400 Release Indicator: indicate release after next message has been replied
 #define TRANSMIT_FLAGS "0x200"  //  Release the connection i.e. don't wait for response. Saves power. See https://forum.iot.t-mobile.nl/topic/278/how-much-battery-lifetime-can-we-expect-with-a-sara-n200-module-on-our-iot-network
 
+/// When sequence is specified in transmit request a report is returned. We can wait for it or close socket immediately
+// #define WAIT_RESULT_REPORT
+
 static int register_transport(const char *network_device, void *server_endpoint, const char *host, uint16_t port, uint8_t server_endpoint_size);
 
 //  Controller buffers.  TODO: Support multiple instances.
@@ -643,6 +646,12 @@ static int send_tx_command(struct bc95g *dev, struct bc95g_socket *socket, const
     const uint8_t *data, uint16_t length, uint8_t sequence, struct os_mbuf *mbuf) {
     uint16_t local_port = socket->local_port;
     int local_port_response = -1, length_response = -1;
+
+#ifdef WAIT_RESULT_REPORT 
+    uint16_t result_socket, result_sequence, result_status;
+    char cmd_result[17];  memset(cmd_result, 0, sizeof(cmd_result));
+#endif
+    
 #ifdef TRANSMIT_FLAGS
     console_printf("AT> NSOSTF=%d,%s,%d,%s,%d,\n", local_port, host, port, TRANSMIT_FLAGS, length);
 #else
@@ -661,10 +670,42 @@ static int send_tx_command(struct bc95g *dev, struct bc95g_socket *socket, const
         send_data(dev, data, length, mbuf) &&
         parser.send(",%d", sequence) &&
         parser.recv("%d,%d", &local_port_response, &length_response) &&
+        parser.recv("OK") 
+#ifdef WAIT_RESULT_REPORT        
+        && parser.recv("+%16[^:]:%d,%d,%d", cmd_result, &result_socket, &result_sequence, &result_status)
+#endif
+
+    );
+    return (res) ? length : 0;
+}
+
+
+static int read_rx_command(struct bc95g *dev, struct bc95g_socket *socket, const uint8_t *data, uint16_t length) {
+    uint16_t local_port_response, local_port = socket->local_port;
+
+    char remote_ipaddr[16];
+    uint16_t remote_port;
+    uint16_t rec_length;
+    uint16_t rec_length_remain;
+
+    bool res = (
+        send_atp(dev) &&
+        parser.send("NSORF=%d,%d", local_port, length) && 
+        parser.recv("%d,%s,%d,%d,%x,", &local_port_response, remote_ipaddr, &remote_port, &rec_length, data, &rec_length_remain) &&
         parser.recv("OK")
     );
-    return res ? length : 0;
+
+    console_printf("received datas (%d/%d) from %s: ", rec_length, length, remote_ipaddr);
+    for(uint16_t i=0; i<rec_length; i++){
+        console_printf("%x", data[i]);
+    }
+    console_printf("%c", '\n');
+
+    return res ? rec_length : 0;
+
 }
+
+
 
 int bc95g_socket_tx(struct bc95g *dev, struct bc95g_socket *socket, const char *host, uint16_t port, const uint8_t *data, uint16_t length, uint8_t sequence) {
     //  Transmit the buffer through the socket.  `length` is the number of bytes in `data`.  `sequence` is a running message sequence number 1 to 255.  Return number of bytes transmitted.
@@ -675,4 +716,24 @@ int bc95g_socket_tx_mbuf(struct bc95g *dev, struct bc95g_socket *socket, const c
     //  Transmit the chain of mbufs through the socket.  `sequence` is a running message sequence number 1 to 255.  Return number of bytes transmitted.
     uint16_t length = OS_MBUF_PKTLEN(mbuf);  //  Length of the mbuf chain.
     return send_tx_command(dev, socket, host, port, NULL, length, sequence, mbuf);
+}
+
+int bc95g_socket_rx(struct bc95g *dev, struct bc95g_socket *socket, const uint8_t *data, uint16_t length) {
+    // Receive some datas through the socket. return number of bytes received
+    uint16_t total_rec_length = 0;
+    uint16_t wait_rx_retries = 0;
+
+    while(1){
+
+        total_rec_length += read_rx_command(dev, socket, data, length);
+
+        if(total_rec_length == length){break;}
+        
+        if(++wait_rx_retries > 10){break;}
+
+        sleep(2);
+    }
+    
+
+    return total_rec_length;
 }

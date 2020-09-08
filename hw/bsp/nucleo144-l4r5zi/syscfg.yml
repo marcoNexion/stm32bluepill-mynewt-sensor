@@ -27,8 +27,12 @@ syscfg.defs:
         value:  1
 
     UART_1:
-        description: 'Whether to enable UART1'
+        description: 'Whether to enable UART1 for debug purposes'
         value:  0
+
+    UART_2:
+        description: 'UART used to communicate with ublox gps receiver'
+        value:  1
 
     TIMER_0:
         description: 'Timer 0'

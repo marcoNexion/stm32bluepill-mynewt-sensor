@@ -1,18 +1,5 @@
-<<<<<<< HEAD
 #target.app: "@apache-mynewt-core/apps/boot"
 target.app: "apps/boot_stub"
 target.bsp: "hw/bsp/nucleo144-l4r5zi"
 target.build_profile: optimized
 #target.build_profile: debug
-=======
-# Bootloader Target Settings
-
-# Bootloader that will be targeted
-target.app:           "apps/boot_stub"
-
-# Board Support Package (BSP) for the target
-target.bsp:           "hw/bsp/stm32l4"
-
-# Build with debug support. Or select "optimized" to remove debug support.
-target.build_profile: debug
->>>>>>> origin/pinetime

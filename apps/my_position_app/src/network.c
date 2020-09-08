@@ -26,7 +26,6 @@
 #include <console/console.h>  //  For Mynewt console output. Actually points to libs/semihosting_console
 #include <sensor_network/sensor_network.h>  //  For Sensor Network library
 #include <sensor_coap/sensor_coap.h>        //  For Sensor CoAP library
-#include "geolocate.h"                      //  For geolocate()
 #include "network.h"
 
 int send_sensor_data(struct sensor_value *val) {

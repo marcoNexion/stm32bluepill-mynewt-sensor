@@ -1,0 +1,120 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# System Configuration Setting Definitions:
+#   Below are the settings defined by this app and their default values. To change the settings, 
+#   edit the target config file at targets/bluepill_my_sensor/syscfg.yml.  
+#   Strings must be enclosed by '"..."'
+
+syscfg.defs:
+    # List of Settings
+    BC95G:
+        description: 'Enable NB-IoT access with Quectel BC95-G'
+        value:        0            
+    REMOTE_SENSOR:
+        description: 'Enable driver for Remote Sensor that receives sensor data via nRF24L01 and CoAP'
+        value:        0        
+    SENSOR_NETWORK:
+        description: 'Enable Sensor Network library'
+        value:        0
+    SENSOR_COAP:
+        description: 'Send sensor data to CoAP server'
+        value:        0     
+    HMAC_PRNG:
+        description: 'Generate pseuorandom numbers with HMAC. Based on TinyCrypt HMAC PRNG. Requires "temp_stm32" driver for internal temperature sensor as source of entropy.'
+        value:        0      
+    RAW_TEMP:
+        description: 'Use raw temperature (integer) instead of floating-point temperature values, to reduce ROM size'
+        value:        0        
+    GPS_DEVICE:      
+        description:  'Use gps to get my position and UTC time'
+        value:        UNDEFINED_GPS_DEVICE
+    GPS_POLL_TIME:      
+        description:  'periodic queyring of gps device'
+        value:        20 * 1000
+    SEMIHOSTING_CONSOLE:
+        description: 'Use Arm Semihosting to display console messages. Works with STLink V2 and OpenOCD'
+        value:        1  # Default console is Arm Semihosting
+    
+# System Configuration Setting Values:
+#   Below we override the driver and library settings. Settings defined in
+#   targets/bluepill_my_sensor/syscfg.yml will override the settings below.
+
+syscfg.vals:
+    ###########################################################################
+    # CoAP Server Settings
+
+    # CoAP host e.g. 104.199.85.211 (for coap.thethings.io)
+    COAP_HOST:      '"104.199.85.211"'
+
+    # CoAP UDP port, usually port 5683
+    COAP_PORT:      5683
+
+    # CoAP URI e.g. v2/things/IVRiBCcR6HPp_CcZIFfOZFxz_izni5xc_KO-kgSA2Y8 (for thethings.io, the last part is the Thing Token)
+    COAP_URI:       '"v2/things/IVRiBCcR6HPp_CcZIFfOZFxz_izni5xc_KO-kgSA2Y8"'
+
+    ###########################################################################
+    # GPS Settings
+    GPS_DEVICE:         '"gps_neo6m"'
+
+    GPS_POLL_TIME:      (10 * 1000)
+
+    ###########################################################################
+    # Network Settings
+
+    SENSOR_NETWORK:         1  # Enable Sensor Network library
+    SENSOR_COAP:            1  # Send sensor data to CoAP server
+    COAP_JSON_ENCODING:     1  # Use JSON to encode CoAP payload for forwarding to thethings.io
+    RAW_TEMP:               1  # Use raw temperature (integer) instead of floating-point temperature values, to reduce ROM size
+
+    ###########################################################################
+    # Hardware Settings
+     
+    BC95G:                  0  # Enable Quectel BC95-G NB-IoT driver
+    HMAC_PRNG:              1  # Enable HMAC PRNG pseudorandom number generator
+
+    ###########################################################################
+    # OIC Settings for CoAP Transmission
+    OC_CLIENT:              1  # Enable the OIC (CoAP) client library
+    OC_SERVER:              0  # Disable the OIC (CoAP) server library
+    OC_TRANS_SECURITY:      0  # Disable TLS security
+    OC_TRANSPORT_IPV6:      0  # Disable IPv6, only use IPv4
+    OC_CLIENT_DISCOVERY_ENABLE: 0  # Disable client discovery
+    OC_NUM_REP_OBJECTS:     2  # Estimated number of nodes in payload tree structure
+    OC_CONCURRENT_REQUESTS: 2  # Max number of concurrent requests
+    OC_APP_RESOURCES:       2  # Max number of server resources
+    OC_CONN_EV_CB_CNT:      2  # How many callback events may be queued
+    OC_MAX_PAYLOAD:       400  # Maximum size of request/response PDUs
+    OC_MAX_PAYLOAD_SIZE:  400  # Platform payload size
+
+    ###########################################################################
+    # Common Settings for minimal ROM size
+    CONSOLE_RTT:              0  # Disable RTT Console
+    CONSOLE_UART:             1  # Disable UART Console
+    LOG_CLI:                  0  # Disable logging command-line interface
+    LOG_LEVEL:              255  # Disable logs
+    SENSOR_CLI:               0  # Disable sensor command-line interface
+    SENSOR_OIC:               0  # Disable sensor OIC functions
+    SHELL_CMD_HELP:           0  # Disable shell help
+    SHELL_OS_MODULE:          0  # Disable shell module
+    SHELL_TASK:               0  # Disable shell task
+    STATS_CLI:                0  # Disable statistics command-line interface
+    OS_SYSVIEW_TRACE_CALLOUT: 0  # Disable trace of callouts
+    OS_SYSVIEW_TRACE_EVENTQ:  0  # Disable trace of event queues
+    OS_SYSVIEW_TRACE_MUTEX:   0  # Disable trace of mutex
+    OS_SYSVIEW_TRACE_SEM:     0  # Disable trace of semaphores

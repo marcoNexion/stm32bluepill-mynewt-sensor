@@ -99,6 +99,9 @@ int bc95g_socket_tx(struct bc95g *dev, struct bc95g_socket *socket, const char *
 //  Transmit the chain of mbufs through the socket.  `sequence` is a running message sequence number 1 to 255.  Return number of bytes transmitted.
 int bc95g_socket_tx_mbuf(struct bc95g *dev, struct bc95g_socket *socket, const char *host, uint16_t port, uint8_t sequence, struct os_mbuf *mbuf);
 
+// Receive some datas through the socket. return number of bytes received
+int bc95g_socket_rx(struct bc95g *dev, struct bc95g_socket *socket, const uint8_t *data, uint16_t length);
+
 //  Attach a callback to a socket.
 void bc95g_socket_attach(struct bc95g *dev, struct bc95g_socket *socket, void (*callback)(void *), void *data);
 

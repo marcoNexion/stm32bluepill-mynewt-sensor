@@ -33,6 +33,9 @@ extern int network_is_busy;
 
 extern int network_has_transmitted;
 
+///After successfull transmission we can wait for server's answer
+//#define GET_RESPONSE
+
 /// Never detach from NB-IoT network. Consumes more power.
 // #define ALWAYS_ATTACHED
 
@@ -171,6 +174,14 @@ static void oc_tx_ucast(struct os_mbuf *m) {
         //  Send the consolidated buffer via UDP.
         rc = bc95g_socket_tx_mbuf(dev, socket, endpoint->host, endpoint->port, sequence, m);
         assert(rc > 0);  //  In case of error, try increasing BC95G_TX_BUFFER_SIZE
+
+#ifdef GET_RESPONSE
+        uint8_t rxd_datas_from_server[256];
+        rc = bc95g_socket_rx(dev, socket, rxd_datas_from_server, sizeof(rxd_datas_from_server));
+        assert(rc > 0);
+#endif
+
+        os_time_delay(5 * OS_TICKS_PER_SEC);
 
         //  Close the UDP socket.
         rc = bc95g_socket_close(dev, socket);

@@ -1,0 +1,81 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# Package Settings
+pkg.name:        "apps/my_position_app"
+pkg.type:        app
+pkg.description: ""
+pkg.author:      "You <you@you.org>"
+pkg.homepage:    "http://your-url.org/"
+pkg.keywords:
+
+# Package Dependencies: Application is dependent on these drivers and libraries.
+pkg.deps:
+    - "@apache-mynewt-core/kernel/os"       #  Mynewt kernel
+    - "@apache-mynewt-core/sys/log/stub"    #  Disable logging
+    - "@apache-mynewt-core/sys/stats/stub"  #  Disable stats
+    - "@apache-mynewt-core/hw/sensor"          #  Sensor Library
+    - "@apache-mynewt-core/hw/sensor/creator"  #  Sensor Creator
+    - "@apache-mynewt-core/libc/baselibc"      #  Baselibc, the tiny version of standard C library
+
+# Optional Dependencies: Application is dependent on these optional drivers and libraries.
+#   "pkg.deps.xxx" refers to packages that should be included only if option "xxx" is
+#   enabled in targets/bluepill_my_sensor/syscfg.yml or apps/my_sensor_app/syscfg.yml
+
+# Quectel BC95-G NB-IoT driver
+pkg.deps.BC95G:
+    - "libs/bc95g"                         #  Quectel BC95-G NB-IoT driver
+
+# Driver for Remote Sensor that receives sensor data via nRF24L01 and CoAP
+pkg.deps.REMOTE_SENSOR:
+    - "libs/remote_sensor"                 #  Driver for Remote Sensor that receives sensor data via nRF24L01 and CoAP
+
+# Sensor Network library
+pkg.deps.SENSOR_NETWORK:
+    - "libs/sensor_network"                #  Sensor Network library
+
+# CoAP library for transmitting sensor data to CoAP server
+pkg.deps.SENSOR_COAP:
+    - "libs/sensor_coap"                   #  CoAP library for transmitting sensor data
+
+# HMAC PRNG pseudorandom number generator library
+pkg.deps.HMAC_PRNG:
+    - "libs/hmac_prng"                     #  HMAC PRNG pseudorandom number generator
+
+# Library for positionning
+pkg.deps.GPS_DEVICE:
+    - "libs/gps_neo6m"                      #  GPS
+
+# Library for Semihosting Console
+pkg.deps.SEMIHOSTING_CONSOLE:
+    - "libs/semihosting_console"           #  Semihosting Console
+
+#  C compiler flags
+pkg.cflags:
+    - -DFLOAT_SUPPORT         #  For encoding floats in CoAP messages
+    - -Og
+#    - -Os                     #  Optimise for smallest size
+
+#  To test expansion of macros, enable both options below.  Expanded source code will appear at "bin" folder,
+#  like bin\targets\bluepill_my_sensor\app\libs\remote_sensor\libs\remote_sensor\src\remote_sensor.o
+#   - -E 
+#   - -dD
+
+#  Linker flags
+pkg.lflags:
+    - -Wl,-wrap,coap_receive  #  Rename all coap_receive() references to __wrap_coap_receive(), so that we can provide a custom implementation
