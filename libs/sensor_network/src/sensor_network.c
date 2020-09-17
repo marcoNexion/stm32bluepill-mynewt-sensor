@@ -27,7 +27,13 @@
 #if MYNEWT_VAL(HMAC_PRNG)
 #include <hmac_prng/hmac_prng.h>      //  Pseudorandom number generator for device ID
 #endif  //  MYNEWT_VAL(HMAC_PRNG)
+#if MYNEWT_VAL(SENCOR_COAP)
 #include <sensor_coap/sensor_coap.h>  //  Sensor CoAP library
+#endif
+#if MYNEWT_VAL(CUSTOM_COAP)
+#include <custom_coap/custom_coap.h>  //  Sensor CoAP library
+#endif
+
 #include "sensor_network/sensor_network.h"
 
 static const char *_net = "NET ";     //  Prefix for console messages
@@ -114,10 +120,14 @@ struct sensor_network_endpoint {  //  Represents one Server Endpoint e.g. ESP826
 
 static struct sensor_network_interface sensor_network_interfaces[MAX_INTERFACE_TYPES];  //  All Network Interfaces
 static struct sensor_network_endpoint sensor_network_endpoints[MAX_INTERFACE_TYPES];    //  All Server Endpoints
+
+#if MYNEWT_VAL(SENCOR_COAP)
 static int sensor_network_encoding[MAX_INTERFACE_TYPES] = {  //  Encoding for each Network Interface
     APPLICATION_JSON,  //  Send to Server: JSON encoding for payload
     APPLICATION_CBOR,  //  Send to Collector: CBOR encoding for payload
 };
+#endif
+
 static const char *sensor_network_shortname[MAX_INTERFACE_TYPES] = {  //  Short name of each Network Interface
     "svr",  //  Send to Server
     "col",  //  Send to Collector
@@ -269,13 +279,26 @@ bool sensor_network_init_post(uint8_t iface_type, const char *uri) {
     struct sensor_network_interface *iface = &sensor_network_interfaces[iface_type];
     assert(iface->network_device);  assert(iface->register_transport_func);
     void *endpoint = &sensor_network_endpoints[iface_type];
+
+#if MYNEWT_VAL(SENCOR_COAP)
     int encoding = sensor_network_encoding[iface_type];
+#endif
+#if MYNEWT_VAL(CUSTOM_COAP)
+    int encoding = TEXT_PLAIN;
+#endif
+
     if (!iface->transport_registered) {
         //  If transport has not been registered, wait for the transport to be registered.
         console_printf("NET network not ready\n");
         return false;
     }
-    bool status = init_sensor_post(endpoint, uri, encoding);
+    bool status = 0;
+#if MYNEWT_VAL(SENCOR_COAP)
+    status = init_sensor_post(endpoint, uri, encoding);
+#endif
+#if MYNEWT_VAL(CUSTOM_COAP)
+    status = init_custom_post(endpoint, uri, encoding);
+#endif
     assert(status);
     return status;
 }
@@ -308,7 +331,15 @@ bool sensor_network_do_post(uint8_t iface_type) {
     //  message to the background task, we release a semaphore that unblocks other requests
     //  to compose and post CoAP messages.
     assert(iface_type >= 0 && iface_type < MAX_INTERFACE_TYPES);
-    bool status = do_sensor_post();
+    
+    bool status = 0;
+#if MYNEWT_VAL(SENCOR_COAP)
+    status = do_sensor_post();
+#endif
+#if MYNEWT_VAL(CUSTOM_COAP)
+    status = do_custom_post();
+#endif
+
     assert(status);
     return status;
 }

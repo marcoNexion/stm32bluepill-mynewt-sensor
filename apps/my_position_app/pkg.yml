@@ -53,6 +53,10 @@ pkg.deps.SENSOR_NETWORK:
 pkg.deps.SENSOR_COAP:
     - "libs/sensor_coap"                   #  CoAP library for transmitting sensor data
 
+# CoAP library for transmitting sensor data to CoAP server
+pkg.deps.CUSTOM_COAP:
+    - "libs/custom_coap"                   #  CoAP library for transmitting sensor data
+
 # HMAC PRNG pseudorandom number generator library
 pkg.deps.HMAC_PRNG:
     - "libs/hmac_prng"                     #  HMAC PRNG pseudorandom number generator

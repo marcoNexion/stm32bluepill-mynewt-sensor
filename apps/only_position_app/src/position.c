@@ -44,11 +44,9 @@ int start_position_listener(void) {
     if (strlen(MYNEWT_VAL(GPS_DEVICE)) == 0) { return 0; }  //  Sensor device not defined.
     console_printf("POS get %s\n", MYNEWT_VAL(GPS_DEVICE));
 
-#if 1
     //  Set the sensor polling time to 10 seconds.  SENSOR_DEVICE is "temp_stm32_0", SENSOR_POLL_TIME is 10,000.
     int rc = sensor_set_poll_rate_ms(MYNEWT_VAL(GPS_DEVICE), MYNEWT_VAL(GPS_POLL_TIME));
     assert(rc == 0);
-#endif
 
     //  Fetch the sensor by name, without locking the driver for exclusive access.
     struct sensor *listen_position = sensor_mgr_find_next_bydevname(MYNEWT_VAL(GPS_DEVICE), NULL);

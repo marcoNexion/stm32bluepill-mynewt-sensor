@@ -34,7 +34,10 @@ syscfg.defs:
         value:        0
     SENSOR_COAP:
         description: 'Send sensor data to CoAP server'
-        value:        0     
+        value:        0
+    CUSTOM_COAP:
+        description: 'Send custom data to COAP Server' 
+        value:        0  
     HMAC_PRNG:
         description: 'Generate pseuorandom numbers with HMAC. Based on TinyCrypt HMAC PRNG. Requires "temp_stm32" driver for internal temperature sensor as source of entropy.'
         value:        0      
@@ -72,20 +75,21 @@ syscfg.vals:
     # GPS Settings
     GPS_DEVICE:         '"gps_neo6m"'
 
-    GPS_POLL_TIME:      (10 * 1000)
+    GPS_POLL_TIME:      (60 * 1000)
 
     ###########################################################################
     # Network Settings
 
     SENSOR_NETWORK:         1  # Enable Sensor Network library
     SENSOR_COAP:            1  # Send sensor data to CoAP server
+    CUSTOM_COAP:            1
     COAP_JSON_ENCODING:     1  # Use JSON to encode CoAP payload for forwarding to thethings.io
     RAW_TEMP:               1  # Use raw temperature (integer) instead of floating-point temperature values, to reduce ROM size
 
     ###########################################################################
     # Hardware Settings
      
-    BC95G:                  0  # Enable Quectel BC95-G NB-IoT driver
+    BC95G:                  1  # Enable Quectel BC95-G NB-IoT driver
     HMAC_PRNG:              1  # Enable HMAC PRNG pseudorandom number generator
 
     ###########################################################################

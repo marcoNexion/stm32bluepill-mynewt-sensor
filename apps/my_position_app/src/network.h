@@ -24,13 +24,12 @@
 extern "C" {  //  Expose the types and functions below to C functions.
 #endif
 
-struct sensor_value;
 
 //  Compose a CoAP JSON message with the Sensor Key (field name) and Value in val 
 //  and send to the CoAP server.  The message will be enqueued for transmission by the CoAP / OIC 
 //  Background Task so this function will return without waiting for the message 
 //  to be transmitted.  Return 0 if successful, SYS_EAGAIN if network is not ready yet.
-int send_sensor_data(struct sensor_value *val);
+int send_plain_text_data(char *str);
 
 #ifdef __cplusplus
 }

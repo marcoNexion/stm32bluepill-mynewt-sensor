@@ -15,29 +15,18 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+#
 
-# Dependencies for this package
-
-pkg.name:        libs/custom_sensor
-pkg.description: Custom sensor definition for STM32 Internal Temperature Sensor raw values
-pkg.author:      "Lee Lup Yuen <luppy@appkaki.com>"
-pkg.homepage:    "https://github.com/lupyuen"
+pkg.name: "libs/custom_coap"
+pkg.description: "Description of your package"
+pkg.author: "You <you@you.org>"
+pkg.homepage: "http://your-url.org/"
 pkg.keywords:
     - stm32
-    - temperature
-    - sensor
+    - position
+    - custom
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/sensor"
-
-# Initialisation functions to be called by sysinit() during startup.
-# Mynewt consolidates the initialisation functions into sysinit()
-# and calls them according to the Stage number, highest number first.
-# Stage 500 is used by Sensor Creator so we use Stage 600 onwards.
-# Generated sysinit(): bin/targets/bluepill_my_sensor/generated/src/bluepill_my_sensor-sysinit-app.c
-
-pkg.init:
-    # sensor_coap should be initialised after esp8266 (Stage 650)
-    init_custom_coap: 660  # Call init_sensor_coap() to initialise the Sensor CoAP module during startup
