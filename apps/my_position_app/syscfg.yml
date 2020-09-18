@@ -53,6 +53,9 @@ syscfg.defs:
     SEMIHOSTING_CONSOLE:
         description: 'Use Arm Semihosting to display console messages. Works with STLink V2 and OpenOCD'
         value:        1  # Default console is Arm Semihosting
+    PAYLOAD_USE_TINYCRYPT:
+        description: 'Use tinycrypt lib to compute an unique id and to authenticate payload'
+        value:        1  # Default console is Arm Semihosting
     
 # System Configuration Setting Values:
 #   Below we override the driver and library settings. Settings defined in

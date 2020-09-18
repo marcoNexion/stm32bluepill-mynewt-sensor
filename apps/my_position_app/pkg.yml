@@ -69,6 +69,10 @@ pkg.deps.GPS_DEVICE:
 pkg.deps.SEMIHOSTING_CONSOLE:
     - "libs/semihosting_console"           #  Semihosting Console
 
+# Library for payload auth
+pkg.deps.PAYLOAD_USE_TINYCRYPT:
+    - "@apache-mynewt-core/crypto/tinycrypt"   #  TinyCrypt library
+
 #  C compiler flags
 pkg.cflags:
     - -DFLOAT_SUPPORT         #  For encoding floats in CoAP messages

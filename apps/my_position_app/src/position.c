@@ -30,6 +30,11 @@
 #include "network.h"                        //  For send_sensor_data()
 #include "gps_neo6m/gps_neo6m.h"
 
+#include <tinycrypt/sha256.h>
+#include <tinycrypt/constants.h>
+#include <tinycrypt/utils.h>
+
+
 //  Defined later below
 static int handle_position_data(struct sensor* sensor, void *arg, void *sensor_data, sensor_type_t type);
 
@@ -40,11 +45,58 @@ static struct sensor_listener listener = {
     .sl_arg         = NULL,
 };
 
+
+// Generates secret key. Has to be compliant with server's algorithm (which processes strings)
+int generate_device_secret_key(char *unique_id, uint8_t hash_times, uint8_t *result){
+    
+    struct tc_sha256_state_struct sha256;
+    uint8_t len;
+    char *ptdata;
+
+    uint8_t digest[TC_SHA256_DIGEST_SIZE];
+
+    if(unique_id == NULL || result == NULL){
+        return -1;
+    }
+
+    //begin with unique_id in data msg
+    strcpy((char*)result, unique_id);
+    
+    for(uint8_t i=0; i<hash_times; i++)
+    {       
+        ptdata=(char*)result;
+
+        //since msg is a string : find its length
+        len = strlen((char*)result);
+
+        if(len > (TC_SHA256_DIGEST_SIZE*2)){
+            return -1;
+        }
+
+        //use tinycrypt
+        tc_sha256_init(&sha256);       
+        tc_sha256_update(&sha256, (uint8_t*)ptdata, len);
+        tc_sha256_final(digest, &sha256);
+
+        //convert digest into string type
+        for(uint8_t j=0; j<TC_SHA256_DIGEST_SIZE; j++)
+        {
+            sprintf(ptdata,"%02x", (unsigned char)digest[j]);
+            ptdata+=2;
+        }
+    }
+
+    return 0;
+}
+
 int start_position_listener(void) {
     //  Ask Mynewt to poll the position sensor every 10 seconds and call `handle_position_data()`.
     //  Return 0 if successful.
     if (strlen(MYNEWT_VAL(GPS_DEVICE)) == 0) { return 0; }  //  Sensor device not defined.
     console_printf("POS get %s\n", MYNEWT_VAL(GPS_DEVICE));
+
+    uint8_t key[TC_SHA256_DIGEST_SIZE*2+1];
+    generate_device_secret_key("DEADBEEF", 30, key);
 
     //  Set the sensor polling time to 10 seconds.  SENSOR_DEVICE is "temp_stm32_0", SENSOR_POLL_TIME is 10,000.
     int rc = sensor_set_poll_rate_ms(MYNEWT_VAL(GPS_DEVICE), MYNEWT_VAL(GPS_POLL_TIME));
