@@ -1,0 +1,3 @@
+[submodule "apache-mynewt-core"]
+	path = apache-mynewt-core
+	url = C:\\Dev\\stm32bluepill-mynewt-sensor\\repos\\apache-mynewt-core

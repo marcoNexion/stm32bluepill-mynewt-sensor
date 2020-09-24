@@ -238,9 +238,9 @@ bool ATParser::vrecv(const char *response, va_list args)
                 ////asm("bkpt");
                 return false;
             }
-            _buffer[offset + j++] = c;
-            _buffer[offset + j] = 0;
-            // if (debug_bc95g) { char ch = c; if (ch != '\r') { console_buffer(&ch, 1); } }  //  TODO: Only for Semihosting Console.
+            _buffer[offset + j] = c;
+            _buffer[offset + j + 1] = 0;
+            if (debug_bc95g) { char ch = c; if (ch != '\r') { console_buffer(&ch, 1); } }  //  TODO: Only for Semihosting Console.
 
             // Check for oob data
             for (int k = 0; k < MAX_OOBS; k++) {
@@ -282,6 +282,8 @@ bool ATParser::vrecv(const char *response, va_list args)
                 break;
             }
 
+            j++;
+            
             // Clear the buffer when we hit a newline or ran out of space
             // running out of space usually means we ran into binary data
             if (j+1 >= _buffer_size - offset ||
