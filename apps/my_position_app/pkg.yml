@@ -76,7 +76,7 @@ pkg.deps.PAYLOAD_USE_TINYCRYPT:
 #  C compiler flags
 pkg.cflags:
     - -DFLOAT_SUPPORT         #  For encoding floats in CoAP messages
-    - -Og
+    - -O0
 #    - -Os                     #  Optimise for smallest size
 
 #  To test expansion of macros, enable both options below.  Expanded source code will appear at "bin" folder,
