@@ -31,16 +31,10 @@ extern "C" {  //  Expose the types and functions below to C functions.
 #define GPS_NEO6M_DEVICE "gps_neo6m"  //  Name of the device
 
 //  Use static buffers to avoid dynamic memory allocation (new, delete)
-#define GPS_NEO6M_TX_BUFFER_SIZE      400  //  Must be large enough to hold sensor and geolocation CoAP UDP messages.
-#define GPS_NEO6M_RX_BUFFER_SIZE      1024
-#define GPS_NEO6M_PARSER_BUFFER_SIZE  1024
+#define GPS_NEO6M_TX_BUFFER_SIZE      32  
+#define GPS_NEO6M_RX_BUFFER_SIZE      512
+#define GPS_NEO6M_PARSER_BUFFER_SIZE  512
 
-//  Various timeouts for different GPS operations, in milliseconds.
-#define GPS_NEO6M_CONNECT_TIMEOUT     10000  //  10  seconds: Timeout for connecting to WiFi access point
-#define GPS_NEO6M_SEND_TIMEOUT        10000  //  10  seconds: Timeout for sending a packet
-#define GPS_NEO6M_RECV_TIMEOUT            0  //   0  seconds: Timeout for receiving a packet
-#define GPS_NEO6M_SCAN_TIMEOUT        30000  //  30  seconds: Timeout for scanning WiFi access points
-#define GPS_NEO6M_MISC_TIMEOUT         2000  //   2  seconds: Timeout for opening a socket
 
 //  GPS Configuration
 struct gps_neo6m_cfg {

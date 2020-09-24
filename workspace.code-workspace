@@ -75,7 +75,8 @@
 			"gd32vf103_hal.h": "c",
 			"console.h": "c",
 			"sensor_helper.h": "c",
-			"network.h": "c"
+			"network.h": "c",
+			"time.h": "c"
 		},
 		"rust.racer_completion": false
 	}

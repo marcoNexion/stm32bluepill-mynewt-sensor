@@ -27,6 +27,7 @@
 #include "util.h"
 #include "bc95g/bc95g.h"
 #include "bc95g/transport.h"
+#include <datetime/datetime.h>
 
 /// Set this to 1 so that `power_sleep()` will not sleep when network is busy connecting.  Defined in apps/my_sensor_app/src/power.c
 extern int network_is_busy;
@@ -164,6 +165,12 @@ static void oc_tx_ucast(struct os_mbuf *m) {
 
         //  Attach to NB-IoT network.
         rc = bc95g_attach(dev);
+        assert(rc == 0);
+
+        // Get Time and date
+        struct clocktime clock_time;
+        struct os_timezone time_zone;
+        rc = bc85g_get_time_and_date(dev, &clock_time, &time_zone);
         assert(rc == 0);
 
         //  Allocate a new UDP socket.

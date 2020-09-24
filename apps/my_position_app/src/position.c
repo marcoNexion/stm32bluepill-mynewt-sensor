@@ -34,7 +34,6 @@
 #include <tinycrypt/constants.h>
 #include <tinycrypt/utils.h>
 
-
 //  Defined later below
 static int handle_position_data(struct sensor* sensor, void *arg, void *sensor_data, sensor_type_t type);
 
@@ -45,6 +44,7 @@ static struct sensor_listener listener = {
     .sl_arg         = NULL,
 };
 
+#ifdef SECRET_KEY_TEST
 
 // Generates secret key. Has to be compliant with server's algorithm (which processes strings)
 int generate_device_secret_key(char *unique_id, uint8_t hash_times, uint8_t *result){
@@ -89,32 +89,40 @@ int generate_device_secret_key(char *unique_id, uint8_t hash_times, uint8_t *res
     return 0;
 }
 
+#endif
+
 int start_position_listener(void) {
+    int rc;
     //  Ask Mynewt to poll the position sensor every 10 seconds and call `handle_position_data()`.
     //  Return 0 if successful.
     if (strlen(MYNEWT_VAL(GPS_DEVICE)) == 0) { return 0; }  //  Sensor device not defined.
+
     console_printf("POS get %s\n", MYNEWT_VAL(GPS_DEVICE));
 
+#ifdef SECRET_KEY_TEST
     uint8_t key[TC_SHA256_DIGEST_SIZE*2+1];
     generate_device_secret_key("DEADBEEF", 30, key);
-
-    //  Set the sensor polling time to 10 seconds.  SENSOR_DEVICE is "temp_stm32_0", SENSOR_POLL_TIME is 10,000.
-    int rc = sensor_set_poll_rate_ms(MYNEWT_VAL(GPS_DEVICE), MYNEWT_VAL(GPS_POLL_TIME));
-    assert(rc == 0);
+#endif
 
     //  Fetch the sensor by name, without locking the driver for exclusive access.
     struct sensor *listen_position = sensor_mgr_find_next_bydevname(MYNEWT_VAL(GPS_DEVICE), NULL);
     assert(listen_position != NULL);
 
+    //  Set the sensor polling time to 10 seconds.  SENSOR_DEVICE is "temp_stm32_0", SENSOR_POLL_TIME is 10,000.
+    rc = sensor_set_poll_rate_ms(MYNEWT_VAL(GPS_DEVICE), MYNEWT_VAL(GPS_POLL_TIME));
+    assert(rc == 0);
+
     //  Set the Listener Function to be called every 10 seconds, with the polled sensor data.
     rc = sensor_register_listener(listen_position, &listener);
     assert(rc == 0);
-
+    
     rc = gps_neo6m_start();
     assert(rc == 0);
     
     return 0;
 }
+
+static char raw_value[64]="";
 
 static int handle_position_data(struct sensor* sensor, void *arg, void *sensor_data, sensor_type_t type) {
     //  This listener function is called every 10 seconds by Mynewt to handle the polled sensor data.
@@ -138,13 +146,15 @@ static int handle_position_data(struct sensor* sensor, void *arg, void *sensor_d
     console_printf(" / alt: ");  console_printfloat(geolocation->sgd_altitude);
     console_printf("\n"); console_flush(); ////
 
-    char raw_value[64]="";
-
+    struct os_timeval utc_tv;
     struct custom_value datas;
 
     datas.id = 0xDEADBEEF;
     datas.tx_reason = START;
-    datas.timestamp = 1600081783;
+    os_gettimeofday(&utc_tv, NULL);
+
+    datas.timestamp = utc_tv.tv_sec;
+        
     datas.mV_Bat = 3300;
     datas.position_type = GPS;
     datas.position.gps.latitude = geolocation->sgd_latitude;

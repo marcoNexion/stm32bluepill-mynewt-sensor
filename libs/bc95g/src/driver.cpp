@@ -30,6 +30,7 @@
 #include "bc95g/transport.h"
 #include "util.h"
 #include "at_parser.h"
+#include <datetime/datetime.h>
 
 /// Number of retries for NB-IoT network registration
 #define MAX_REGISTRATION_RETRIES 40
@@ -106,6 +107,10 @@ enum CommandId {
     //  [4] Diagnostics
     CGPADDR,   //  IP address
     NUESTATS,  //  network stats
+
+    //  [5] Get current time and date
+    CCLK,
+
 };
 
 /// List of AT commands
@@ -138,11 +143,20 @@ static const char *COMMANDS[] = {
     //  [4] Diagnostics
     "CGPADDR",   //  CGPADDR: IP address
     "NUESTATS",  //  NUESTATS: network stats
+
+    //  [5] Get current time and date
+    "CCLK?",
+
 };
 
 /// Prefix for all commands: `AT+`
 static const char ATP[] = "AT+";
 
+/// Sleep for the specified number of seconds
+static bool sleep(uint16_t seconds) {
+    os_time_delay(seconds * OS_TICKS_PER_SEC);
+    return true;
+}
 /////////////////////////////////////////////////////////
 //  Internal Functions
 
@@ -267,6 +281,47 @@ static bool send_query_int(struct bc95g *dev, enum CommandId id, int *result) {
     return res;
 }
 
+
+/// Send an AT query like `AT+CCLK=?`. Return the parsed result, which contains String type between double quotes. 
+/// The format is “yy/MM/dd,hh:mm:ss±zz”.
+bool send_query_str(struct bc95g *dev, enum CommandId id, char *str) {
+    //assert(ct);
+    char cmd_response[17];  memset(cmd_response, 0, sizeof(cmd_response));
+    const char *cmd = get_command(dev, id);
+
+    //debug_bc95g = 1;  ////
+    bool res = {
+        send_atp(dev) &&
+        parser.send(cmd) &&
+        //parser.recv("+%16[^:]:%d/%d/%d,%d:%d:%d+%2d", cmd_response, &ct->year, &ct->mon, &ct->day, &ct->hour, &ct->min, &ct->sec, gmt_quarters_diff) &&
+        parser.recv("+%16[^:]:%s", cmd_response, str) &&
+        expect_ok(dev)
+    };
+    //debug_bc95g = 0;  ////
+    console_flush();
+    //asm("bkpt"); ////
+    return res;
+}
+
+bool send_query_time(struct bc95g *dev, enum CommandId id, struct clocktime *ct, int *gmt_quarters_diff) {
+    assert(ct);
+    char cmd_response[5];  memset(cmd_response, 0, sizeof(cmd_response));
+
+    const char *cmd = get_command(dev, id);
+
+    //debug_bc95g = 1;  ////
+    bool res = {
+        send_atp(dev) &&
+        parser.send(cmd) &&
+        parser.recv("+%4[^:]:%2d/%2d/%2d,%2d:%2d:%2d+%2d", cmd_response, &ct->year, &ct->mon, &ct->day, &ct->hour, &ct->min, &ct->sec, gmt_quarters_diff) &&
+        expect_ok(dev)
+    };
+    //debug_bc95g = 0;  ////
+    console_flush();
+    
+    return res;
+}
+
 /////////////////////////////////////////////////////////
 //  Device Creation Functions
 
@@ -362,11 +417,9 @@ static void bc95g_event(void *drv) {
 #endif  //  TODO
 }
 
-/// Sleep for the specified number of seconds
-static bool sleep(uint16_t seconds) {
-    os_time_delay(seconds * OS_TICKS_PER_SEC);
-    return true;
-}
+
+
+
 
 /// Wait for NB-IoT network registration
 static bool wait_for_registration(struct bc95g *dev) {
@@ -590,6 +643,44 @@ int bc95g_socket_close(struct bc95g *dev, struct bc95g_socket *socket) {
     memset(socket, 0, sizeof(bc95g_socket));
     return 0;
 }
+
+
+
+
+int bc85g_get_time_and_date(struct bc95g *dev, struct clocktime *ct, struct os_timezone *tz) {
+    
+    os_timeval timeval;
+    int gmt_quarters_diff;
+    
+    internal_timeout(BC95G_RECV_TIMEOUT);
+
+    bool res = send_query_time(dev, CCLK, ct, &gmt_quarters_diff);
+
+    if (!res) { return false; }  //  If send failed, quit.
+
+    ct->year += 2000;
+    tz->tz_minuteswest = (int16_t)gmt_quarters_diff * 15;
+
+    clocktime_to_timeval(ct, NULL, &timeval);
+
+    os_settimeofday(&timeval, tz);
+
+    return 0;
+
+}
+
+/*
+
+//A set of tools to parse the response string in driver.cpp : CURRENTLY NOT WORKING ....
+
+//char time_string[32];
+//bool res = send_query_str(dev, CCLK, time_string);
+//parse the response and converts it to decimal as os_timezone requires
+//sscanf(time_string, "%d/%d/%d,%d:%d:%d+%2d", &ct->year, &ct->mon, &ct->day, &ct->hour, &ct->min, &ct->sec, &gmt_quarters_diff);
+
+
+*/
+
 
 /// Given n=0..15, return '0'..'f'.
 static char nibble_to_hex(uint8_t n) {

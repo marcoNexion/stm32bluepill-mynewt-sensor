@@ -78,16 +78,16 @@ syscfg.vals:
     # GPS Settings
     GPS_DEVICE:         '"gps_neo6m"'
 
-    GPS_POLL_TIME:      (60 * 1000)
+    GPS_POLL_TIME:      (10 * 1000)
 
     ###########################################################################
     # Network Settings
 
     SENSOR_NETWORK:         1  # Enable Sensor Network library
-    SENSOR_COAP:            1  # Send sensor data to CoAP server
+    SENSOR_COAP:            0  # Send sensor data to CoAP server
     CUSTOM_COAP:            1
-    COAP_JSON_ENCODING:     1  # Use JSON to encode CoAP payload for forwarding to thethings.io
-    RAW_TEMP:               1  # Use raw temperature (integer) instead of floating-point temperature values, to reduce ROM size
+    COAP_JSON_ENCODING:     0  # Use JSON to encode CoAP payload for forwarding to thethings.io
+    RAW_TEMP:               0  # Use raw temperature (integer) instead of floating-point temperature values, to reduce ROM size
 
     ###########################################################################
     # Hardware Settings
@@ -112,7 +112,7 @@ syscfg.vals:
     ###########################################################################
     # Common Settings for minimal ROM size
     CONSOLE_RTT:              0  # Disable RTT Console
-    CONSOLE_UART:             1  # Disable UART Console
+    CONSOLE_UART:             0  # Disable UART Console
     LOG_CLI:                  0  # Disable logging command-line interface
     LOG_LEVEL:              255  # Disable logs
     SENSOR_CLI:               0  # Disable sensor command-line interface

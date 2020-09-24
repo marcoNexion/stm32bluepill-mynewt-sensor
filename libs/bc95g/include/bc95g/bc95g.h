@@ -29,14 +29,14 @@ extern "C" {  //  Expose the types and functions below to C functions.
 #define BC95G_SOCKET_COUNT 1    //  Max number of concurrent UDP operations allowed
 
 //  Use static buffers to avoid dynamic memory allocation (new, delete)
-#define BC95G_TX_BUFFER_SIZE      900  //  Must be large enough to hold sensor and geolocation CoAP UDP messages. 1 byte is represented by 3 chars.
+#define BC95G_TX_BUFFER_SIZE      256  //  Must be large enough to hold UDP messages. 1 byte is represented by 3 chars.
 #define BC95G_RX_BUFFER_SIZE      256
 #define BC95G_PARSER_BUFFER_SIZE  256
 
 //  Various timeouts for different BC95G operations, in milliseconds.
 #define BC95G_CONNECT_TIMEOUT     10000  //  10  seconds: Timeout for connecting to WiFi access point
 #define BC95G_SEND_TIMEOUT        10000  //  10  seconds: Timeout for sending a packet
-#define BC95G_RECV_TIMEOUT            0  //   0  seconds: Timeout for receiving a packet
+#define BC95G_RECV_TIMEOUT          200  //   0  seconds: Timeout for receiving a packet
 #define BC95G_SCAN_TIMEOUT        30000  //  30  seconds: Timeout for scanning WiFi access points
 #define BC95G_MISC_TIMEOUT         2000  //   2  seconds: Timeout for opening a socket
 
@@ -92,6 +92,9 @@ int bc95g_socket_open(struct bc95g *dev, struct bc95g_socket **socket_ptr);
 
 //  Close the socket.  Return 0 if successful.
 int bc95g_socket_close(struct bc95g *dev, struct bc95g_socket *socket);  
+
+//  Ask time and date to the host
+int bc85g_get_time_and_date(struct bc95g *dev, struct clocktime *ct, struct os_timezone *tz);
 
 //  Transmit the buffer through the socket.  `length` is the number of bytes in `data`.  `sequence` is a running message sequence number 1 to 255.  Return number of bytes transmitted.
 int bc95g_socket_tx(struct bc95g *dev, struct bc95g_socket *socket, const char *host, uint16_t port, const uint8_t *data, uint16_t length, uint8_t sequence);
