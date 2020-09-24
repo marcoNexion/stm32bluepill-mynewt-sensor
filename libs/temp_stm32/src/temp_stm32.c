@@ -57,6 +57,31 @@ int temp_stm32_default_cfg(struct temp_stm32_cfg *cfg) {
 }
 #endif  //  STM32L476xx
 
+
+#if defined(STM32L4R5xx)
+#include "stm32l4xx_hal_dma.h"
+#include "stm32l4xx_hal_adc.h"
+#include "adc_stm32l4/adc_stm32l4.h"
+
+//  Config for the temperature channel on ADC1.
+static ADC_ChannelConfTypeDef temp_channel_config = {
+    .Channel      = ADC_CHANNEL_TEMPSENSOR,      //  Channel number of temperature sensor on ADC1.
+    .Rank         = ADC_REGULAR_RANK_1,          //  Every ADC1 channel should be assigned a rank to indicate which channel gets converted first.  Rank 1 is the first to be converted.
+    .SamplingTime = ADC_SAMPLETIME_640CYCLES_5,  //  Sampling time 640 ADC clock cycles.
+};
+
+int temp_stm32_default_cfg(struct temp_stm32_cfg *cfg) {
+    //  Return the default sensor configuration.
+    memset(cfg, 0, sizeof(struct temp_stm32_cfg));  //  Zero the entire object.
+    cfg->bc_s_mask       = SENSOR_TYPE_ALL;         //  Return all sensor values, i.e. temperature.
+    cfg->adc_dev_name    = STM32L4_ADC1_DEVICE;     //  For STM32L4: adc1
+    cfg->adc_channel     = MYNEWT_ADC_CHANNEL_TEMPSENSOR;
+    cfg->adc_open_arg    = NULL;
+    cfg->adc_channel_cfg = &temp_channel_config;    //  Configure the temperature channel.
+    return 0;
+}
+#endif  //(STM32L4R5xx)
+
 #ifdef STM32F103xB  //  Blue Pill
 #include "stm32f1xx_hal_dma.h"
 #include "stm32f1xx_hal_adc.h"

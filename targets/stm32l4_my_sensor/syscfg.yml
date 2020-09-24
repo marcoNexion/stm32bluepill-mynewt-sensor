@@ -69,8 +69,8 @@ syscfg.vals:
      
     BC95G:                  1  # Enable Quectel BC95-G NB-IoT driver    
     TEMP_STUB:              0  # Enable stub temperature sensor
-    TEMP_STM32:             0  # Disable Blue Pill internal temperature sensor
-    ADC_1:                  0  # Disable port ADC1
+    TEMP_STM32:             1  # Disable Blue Pill internal temperature sensor
+    ADC_1:                  1  # Disable port ADC1
     HMAC_PRNG:              0  # Disable HMAC PRNG pseudorandom number generator
 
 

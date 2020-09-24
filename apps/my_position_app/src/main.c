@@ -27,6 +27,7 @@
 #include <console/console.h>  //  For Mynewt console output. Actually points to libs/semihosting_console
 #include <sensor_network/sensor_network.h>   //  For start_server_transport()
 #include "position.h"                          //  For start_position_listener()
+#include "sensor.h"
 
 int main(int argc, char **argv) {
     //  Main program that initialises the sensor, network driver and starts reading 
@@ -41,6 +42,8 @@ int main(int argc, char **argv) {
 
     //  Starting polling the position sensor every N seconds in the background.
     int rc1 = start_position_listener();  assert(rc1 == 0);
+
+    rc1 = start_sensor_listener();  assert(rc1 == 0);
 
     //  Start the Server Transport for sending sensor data to CoAP Server over NB-IoT.
     int rc2 = start_server_transport();  assert(rc2 == 0);

@@ -34,6 +34,8 @@
 #include <tinycrypt/constants.h>
 #include <tinycrypt/utils.h>
 
+//#define SECRET_KEY_TEST
+
 //  Defined later below
 static int handle_position_data(struct sensor* sensor, void *arg, void *sensor_data, sensor_type_t type);
 

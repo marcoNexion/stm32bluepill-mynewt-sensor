@@ -50,10 +50,6 @@ pkg.deps.SENSOR_NETWORK:
     - "libs/sensor_network"                #  Sensor Network library
 
 # CoAP library for transmitting sensor data to CoAP server
-pkg.deps.SENSOR_COAP:
-    - "libs/sensor_coap"                   #  CoAP library for transmitting sensor data
-
-# CoAP library for transmitting sensor data to CoAP server
 pkg.deps.CUSTOM_COAP:
     - "libs/custom_coap"                   #  CoAP library for transmitting sensor data
 
@@ -64,6 +60,13 @@ pkg.deps.HMAC_PRNG:
 # Library for positionning
 pkg.deps.GPS_DEVICE:
     - "libs/gps_neo6m"                      #  GPS
+
+pkg.deps.ADC_1:
+    - "libs/adc_stm32l4"                    # start ADC converision to get actual VDD on board
+
+# Sensor Driver for STM32 internal temperature sensor for STM32, based on ADC
+pkg.deps.TEMP_STM32:
+    - "libs/temp_stm32"                    #  Internal temperature sensor for STM32, based on ADC
 
 # Library for Semihosting Console
 pkg.deps.SEMIHOSTING_CONSOLE:
