@@ -208,19 +208,27 @@ void hal_system_clock_start(void){
         assert(0);
     }
 
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1| RCC_PERIPHCLK_USART2 | RCC_PERIPHCLK_USART3 | RCC_PERIPHCLK_LPUART1 | RCC_PERIPHCLK_USB;
+    PeriphClkInit.PeriphClockSelection =    RCC_PERIPHCLK_USART1 | 
+                                            RCC_PERIPHCLK_USART2 | 
+                                            RCC_PERIPHCLK_USART3 | 
+                                            RCC_PERIPHCLK_LPUART1 | 
+                                            RCC_PERIPHCLK_ADC |
+                                            RCC_PERIPHCLK_USB;
     PeriphClkInit.Lpuart1ClockSelection = RCC_LPUART1CLKSOURCE_PCLK1;
     PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
     PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
     PeriphClkInit.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
+    PeriphClkInit.AdcClockSelection    = RCC_ADCCLKSOURCE_PLLSAI1;
     PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLLSAI1;
+
     PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_MSI;
     PeriphClkInit.PLLSAI1.PLLSAI1M = 1;
-    PeriphClkInit.PLLSAI1.PLLSAI1N = 24;
+    PeriphClkInit.PLLSAI1.PLLSAI1N = 60;
     PeriphClkInit.PLLSAI1.PLLSAI1P = RCC_PLLP_DIV2;
     PeriphClkInit.PLLSAI1.PLLSAI1Q = RCC_PLLQ_DIV2;
     PeriphClkInit.PLLSAI1.PLLSAI1R = RCC_PLLR_DIV2;
-    PeriphClkInit.PLLSAI1.PLLSAI1ClockOut = RCC_PLLSAI1_48M2CLK;
+    PeriphClkInit.PLLSAI1.PLLSAI1ClockOut = RCC_PLLSAI1_ADC1CLK;
+    
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
         assert(0);
     }

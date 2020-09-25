@@ -68,6 +68,9 @@ pkg.deps.ADC_1:
 pkg.deps.TEMP_STM32:
     - "libs/temp_stm32"                    #  Internal temperature sensor for STM32, based on ADC
 
+pkg.deps.VDD_STM32:
+    - "libs/vdd_board"                    #  STM32 Internal vdd reading from ADC
+
 # Library for Semihosting Console
 pkg.deps.SEMIHOSTING_CONSOLE:
     - "libs/semihosting_console"           #  Semihosting Console

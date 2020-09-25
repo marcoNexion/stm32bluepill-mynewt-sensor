@@ -34,6 +34,7 @@ extern "C" {
 //  Allocate the next unused Sensor Type ID.
 #define SENSOR_TYPE_AMBIENT_TEMPERATURE_RAW SENSOR_TYPE_USER_DEFINED_1
 #define SENSOR_TYPE_GEOLOCATION             SENSOR_TYPE_USER_DEFINED_2
+#define SENSOR_TYPE_VOLTAGE                 SENSOR_TYPE_USER_DEFINED_2
 
 //  Raw Temperature Sensor: Instead of floating-point computed temperature, we transmit the
 //  raw temperature value as integer to the Collector Node and CoAP Server to reduce message
@@ -67,6 +68,10 @@ struct sensor_geolocation_data {
     ///  1 if altitude is valid
     uint8_t  sgd_altitude_is_valid;  
 } __attribute__((packed));
+
+struct sensor_voltage_data {
+    uint32_t mV;
+};
 
 #ifdef __cplusplus
 }

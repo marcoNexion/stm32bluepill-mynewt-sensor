@@ -29,12 +29,14 @@
 #include <custom_sensor/custom_sensor.h>    //  For sensor_temp_raw_data
 #include "sensor.h"
 
+#ifdef VOLTAGE_SENSOR_LISTENER
+
 //  Defined later below
 static int handle_sensor_data(struct sensor* sensor, void *arg, void *sensor_data, sensor_type_t type);
 
 //  Define the listener function to be called after polling the temperature sensor.
 static struct sensor_listener listener = {
-    .sl_sensor_type = SENSOR_TYPE_AMBIENT_TEMPERATURE_RAW,  //  Type of sensor: raw ambient temperature (integer)
+    .sl_sensor_type = SENSOR_TYPE_VOLTAGE,  //  Type of sensor: raw ambient temperature (integer)
     .sl_func        = handle_sensor_data,                   //  Listener function to be called with the sensor data
     .sl_arg         = NULL,
 };
@@ -43,7 +45,7 @@ int start_sensor_listener(void) {
     //  Ask Mynewt to poll the temperature sensor every 10 seconds and call `handle_sensor_data()`.
     //  Return 0 if successful.
     if (strlen(MYNEWT_VAL(SENSOR_DEVICE)) == 0) { return 0; }  //  Sensor device not defined.
-    console_printf("TMP poll %s\n", MYNEWT_VAL(SENSOR_DEVICE));
+    console_printf("VDD poll %s\n", MYNEWT_VAL(SENSOR_DEVICE));
 
     //  Set the sensor polling time to 10 seconds.  SENSOR_DEVICE is "temp_stm32_0", SENSOR_POLL_TIME is 10,000.
     int rc = sensor_set_poll_rate_ms(MYNEWT_VAL(SENSOR_DEVICE), MYNEWT_VAL(SENSOR_POLL_TIME));
@@ -63,18 +65,12 @@ static int handle_sensor_data(struct sensor* sensor, void *arg, void *sensor_dat
     //  This listener function is called every 10 seconds by Mynewt to handle the polled sensor data.
     //  Return 0 if we have handled the sensor data successfully.
     if (sensor_data == NULL) { return SYS_EINVAL; }                  //  Exit if data is missing
-    assert(sensor && type == SENSOR_TYPE_AMBIENT_TEMPERATURE_RAW);   //  We only support raw temperature (integer).
+    assert(sensor && type == SENSOR_TYPE_VOLTAGE);   //  We only support raw temperature (integer).
 
     //  Interpret the sensor data as a struct that contains raw temp.
-    struct sensor_temp_raw_data *rawtempdata = (struct sensor_temp_raw_data *) sensor_data;
-    if (!rawtempdata->strd_temp_raw_is_valid) { return SYS_EINVAL; }  //  Exit if data is not valid
-
-    //  Convert into a sensor value for transmission.
-    /*
-    struct sensor_value sensor_value;
-    sensor_value.key = "t";                              //  Sensor field name is `t`
-    sensor_value.val_type = SENSOR_VALUE_TYPE_INT32;    //  Type is integer
-    sensor_value.int_val = rawtempdata->strd_temp_raw;  //  Value is raw temperature (0 to 4095)
-    */
-    return 0;
+    struct sensor_voltage_data *rawdata = (struct sensor_voltage_data *) sensor_data;
+    
+    return ((rawdata!=NULL)?0:-1);
 }
+
+#endif (VOLTAGE_SENSOR_LISTENER)

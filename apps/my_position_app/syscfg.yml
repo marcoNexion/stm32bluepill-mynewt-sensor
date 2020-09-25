@@ -97,7 +97,7 @@ syscfg.vals:
 
     ###########################################################################
     # Sensor device is the STM32 Internal Temperature Sensor
-    SENSOR_DEVICE:     '"temp_stm32_0"' #MYNEWT_VAL(TEMP_STM32_DEVICE)
+    SENSOR_DEVICE:     '"vdd_board_0"'  #'"temp_stm32_0"' #MYNEWT_VAL(TEMP_STM32_DEVICE)
 
         # Sensor value will be sent as field name `t`
     SENSOR_KEY:        '"t"'
@@ -109,12 +109,12 @@ syscfg.vals:
     SENSOR_VALUE_TYPE: SENSOR_VALUE_TYPE_INT32
 
     # Poll the sensor every 10,000 milliseconds (10 seconds)
-    SENSOR_POLL_TIME:  10 * 1000
+    SENSOR_POLL_TIME:  5 * 1000
 
     ###########################################################################
     # GPS Settings
     GPS_DEVICE:         '"gps_neo6m"'
-    GPS_POLL_TIME:      (10 * 1000)
+    GPS_POLL_TIME:      (60 * 1000)
 
     ###########################################################################
     # Network Settings
@@ -130,9 +130,9 @@ syscfg.vals:
     HMAC_PRNG:              1  # Enable HMAC PRNG pseudorandom number generator
     # ADC / TEMP / VDD
     ADC_1:                  1  # Enable port ADC1 for internal temperature sensor
-    TEMP_STM32:             1  # Enable Blue Pill internal temperature sensor
+    TEMP_STM32:             0  # Enable Blue Pill internal temperature sensor
     VDD_STM32:              1
-    
+        
     ###########################################################################
     # OIC Settings for CoAP Transmission
     OC_CLIENT:              1  # Enable the OIC (CoAP) client library
