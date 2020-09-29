@@ -1,0 +1,63 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# Settings this app defines.
+syscfg.defs:
+    HMAC_PRNG:
+        description: 'Generate pseuorandom numbers with HMAC. Based on TinyCrypt HMAC PRNG. Requires "temp_stm32" driver for internal temperature sensor as source of entropy.'
+        value:        0
+    SEMIHOSTING_CONSOLE:
+        description: 'Use Arm Semihosting to display console messages. Works with STLink V2 and OpenOCD'
+        value:        1  # Default console is Arm Semihosting
+    PAYLOAD_USE_TINYCRYPT:
+        description: 'Use tinycrypt lib to compute an unique id and to authenticate payload'
+        value:        1  # Default console is Arm Semihosting
+
+# Settings this app overrides.
+syscfg.vals:
+    ###########################################################################
+    # OIC Settings for CoAP Transmission
+    OC_CLIENT:              1  # Enable the OIC (CoAP) client library
+    OC_SERVER:              0  # Disable the OIC (CoAP) server library
+    OC_TRANS_SECURITY:      0  # Disable TLS security
+    OC_TRANSPORT_IPV6:      0  # Disable IPv6, only use IPv4
+    OC_CLIENT_DISCOVERY_ENABLE: 0  # Disable client discovery
+    OC_NUM_REP_OBJECTS:     2  # Estimated number of nodes in payload tree structure
+    OC_CONCURRENT_REQUESTS: 2  # Max number of concurrent requests
+    OC_APP_RESOURCES:       2  # Max number of server resources
+    OC_CONN_EV_CB_CNT:      2  # How many callback events may be queued
+    OC_MAX_PAYLOAD:       400  # Maximum size of request/response PDUs
+    OC_MAX_PAYLOAD_SIZE:  400  # Platform payload size
+
+    ###########################################################################
+    # Common Settings for minimal ROM size
+    CONSOLE_RTT:              0  # Disable RTT Console
+    CONSOLE_UART:             0  # Disable UART Console
+    LOG_CLI:                  0  # Disable logging command-line interface
+    LOG_LEVEL:              255  # Disable logs
+    SENSOR_CLI:               0  # Disable sensor command-line interface
+    SENSOR_OIC:               0  # Disable sensor OIC functions
+    SHELL_CMD_HELP:           0  # Disable shell help
+    SHELL_OS_MODULE:          0  # Disable shell module
+    SHELL_TASK:               0  # Disable shell task
+    STATS_CLI:                0  # Disable statistics command-line interface
+    OS_SYSVIEW_TRACE_CALLOUT: 0  # Disable trace of callouts
+    OS_SYSVIEW_TRACE_EVENTQ:  0  # Disable trace of event queues
+    OS_SYSVIEW_TRACE_MUTEX:   0  # Disable trace of mutex
+    OS_SYSVIEW_TRACE_SEM:     0  # Disable trace of semaphores

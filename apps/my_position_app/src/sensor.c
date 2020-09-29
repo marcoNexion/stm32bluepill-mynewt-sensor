@@ -29,6 +29,8 @@
 #include <custom_sensor/custom_sensor.h>    //  For sensor_temp_raw_data
 #include "sensor.h"
 
+#define VOLTAGE_SENSOR_LISTENER
+
 #ifdef VOLTAGE_SENSOR_LISTENER
 
 //  Defined later below
@@ -73,4 +75,4 @@ static int handle_sensor_data(struct sensor* sensor, void *arg, void *sensor_dat
     return ((rawdata!=NULL)?0:-1);
 }
 
-#endif (VOLTAGE_SENSOR_LISTENER)
+#endif //(VOLTAGE_SENSOR_LISTENER)

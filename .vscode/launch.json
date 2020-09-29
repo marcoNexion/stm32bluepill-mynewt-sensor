@@ -6,11 +6,12 @@
     "inputs": [
         {
           "type": "pickString",
-          "id": "targetSelector",
+          "id": "appSelector",
           "description": "Select an application running on stm32l4_my_sensor?",
           "options": [
             "only_position_app",
             "my_position_app",
+            "my_button_app",
             "stm32l4_my_sensor"
           ],
           "default": "only_position_app"
@@ -21,7 +22,7 @@
                 "name":"Debug w/ ST-LINK-V2",
                 "type":"cppdbg",
                 "request":"launch",
-                "program":"${workspaceRoot}\\bin\\targets\\stm32l4_my_sensor\\app\\apps\\${input:targetSelector}\\${input:targetSelector}.elf",
+                "program":"${workspaceRoot}\\bin\\targets\\stm32l4_my_sensor\\app\\apps\\${input:appSelector}\\${input:appSelector}.elf",
                 "args":[],
                 "stopAtEntry":true,
                 "cwd":"${workspaceRoot}",
@@ -34,7 +35,7 @@
                 "serverStarted":"target halted due to debug-request, current mode: Thread",
                 "setupCommands":[
                     {
-                        "text":"-environment-cd ${workspaceRoot}\\bin\\targets\\stm32l4_my_sensor\\app\\apps\\${input:targetSelector}\\"
+                        "text":"-environment-cd ${workspaceRoot}\\bin\\targets\\stm32l4_my_sensor\\app\\apps\\${input:appSelector}\\"
                     },
                     {
                         "text":"-target-select remote localhost:3333",
@@ -47,7 +48,7 @@
                         "ignoreFailures":false
                     },
                     {
-                        "text":"-file-exec-and-symbols ${input:targetSelector}.elf",
+                        "text":"-file-exec-and-symbols ${input:appSelector}.elf",
                         "description":"load file",
                         "ignoreFailures":false
                     },

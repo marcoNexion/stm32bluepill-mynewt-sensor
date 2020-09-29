@@ -38,8 +38,14 @@ extern uint8_t _ram_start;
 
 #define RAM_SIZE        (96 * 1024)
 
+/* BUTTON pins */
+#define USER_BLUE_BUTTON    MCU_GPIO_PORTC(13) //with ext pull-down
+
 /* LED pins */
-#define LED_BLINK_PIN   MCU_GPIO_PORTC(7)
+#define LED_BLINK_PIN       MCU_GPIO_PORTC(7)
+#define LED_RED_PIN         MCU_GPIO_PORTB(14)
+#define LED_BLUE_PIN        MCU_GPIO_PORTB(7)
+
 
 /* UART */
 #define UART_CNT 3
