@@ -37,8 +37,11 @@ extern int network_has_transmitted;
 ///After successfull transmission we can wait for server's answer
 //#define GET_RESPONSE
 
+#ifdef GET_RESPONSE
+uint8_t rxd_datas_from_server[256];
+#endif
 /// Never detach from NB-IoT network. Consumes more power.
-// #define ALWAYS_ATTACHED
+#define ALWAYS_ATTACHED
 
 static void oc_tx_ucast(struct os_mbuf *m);
 static uint8_t oc_ep_size(const struct oc_endpoint *oe);
@@ -96,6 +99,15 @@ int bc95g_register_transport(const char *network_device0, struct bc95g_server *s
             //  need to run this in the Network Task in background.  The Main Task will run the Event Loop
             //  to pass BC95G events to this function.
             rc = bc95g_connect(dev);
+            assert(rc == 0);
+
+            rc = bc95g_attach(dev);
+            assert(rc == 0);
+
+            // Get Time and date
+            struct clocktime clock_time;
+            struct os_timezone time_zone;
+            rc = bc85g_get_time_and_date(dev, &clock_time, &time_zone);
             assert(rc == 0);
         }
 
@@ -183,12 +195,11 @@ static void oc_tx_ucast(struct os_mbuf *m) {
         assert(rc > 0);  //  In case of error, try increasing BC95G_TX_BUFFER_SIZE
 
 #ifdef GET_RESPONSE
-        uint8_t rxd_datas_from_server[256];
         rc = bc95g_socket_rx(dev, socket, rxd_datas_from_server, sizeof(rxd_datas_from_server));
         assert(rc > 0);
 #endif
 
-        os_time_delay(5 * OS_TICKS_PER_SEC);
+        //os_time_delay(5 * OS_TICKS_PER_SEC);
 
         //  Close the UDP socket.
         rc = bc95g_socket_close(dev, socket);
