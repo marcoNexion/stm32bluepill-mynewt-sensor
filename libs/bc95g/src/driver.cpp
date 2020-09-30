@@ -45,7 +45,7 @@
 #define TRANSMIT_FLAGS "0x200"  //  Release the connection i.e. don't wait for response. Saves power. See https://forum.iot.t-mobile.nl/topic/278/how-much-battery-lifetime-can-we-expect-with-a-sara-n200-module-on-our-iot-network
 
 /// When sequence is specified in transmit request a report is returned. We can wait for it or close socket immediately
-// #define WAIT_RESULT_REPORT
+#define WAIT_RESULT_REPORT
 
 static int register_transport(const char *network_device, void *server_endpoint, const char *host, uint16_t port, uint8_t server_endpoint_size);
 
@@ -107,6 +107,7 @@ enum CommandId {
     //  [4] Diagnostics
     CGPADDR,   //  IP address
     NUESTATS,  //  network stats
+    UEERROR,    // UE related errors cause
 
     //  [5] Get current time and date
     CCLK,
@@ -143,6 +144,7 @@ static const char *COMMANDS[] = {
     //  [4] Diagnostics
     "CGPADDR",   //  CGPADDR: IP address
     "NUESTATS",  //  NUESTATS: network stats
+    "CMEE=1",   // enable or disable UE related errors cause    
 
     //  [5] Get current time and date
     "CCLK?",
@@ -446,8 +448,8 @@ static bool wait_for_registration(struct bc95g *dev) {
 }
 
 /// Wait for NB-IoT network to be attached
-static bool wait_for_attach(struct bc95g *dev) {
-    for (uint8_t i = 0; i < MAX_ATTACH_RETRIES; i++) {
+static bool wait_for_attach(struct bc95g *dev, uint8_t retries) {
+    for (uint8_t i = 0; i < retries; i++) {
         //  Response contains 1 integer: `state` e.g. `=+CGATT:1`
         int state = -1;
         //  CGATT_QUERY: query attach
@@ -552,7 +554,10 @@ static bool prepare_to_transmit(struct bc95g *dev) {
         (parser.flush() == 0) &&
 
         //  NBAND: select band. Configure `NBIOT_BAND` in `targets/bluepill_my_sensor/syscfg.yml`
-        send_command_int(dev, NBAND, MYNEWT_VAL(NBIOT_BAND))
+        send_command_int(dev, NBAND, MYNEWT_VAL(NBIOT_BAND)) && 
+
+        // enable UE related errors cause +CME ERROR:<err> final result code
+        send_command(dev, UEERROR)
     );
 }
 
@@ -580,7 +585,7 @@ static bool attach_to_network(struct bc95g *dev) {
         wait_for_registration(dev) &&
 
         //  CGATT_QUERY: query attach
-        wait_for_attach(dev) &&
+        wait_for_attach(dev, 10) &&
 
         true
     );
@@ -598,10 +603,11 @@ int bc95g_connect(struct bc95g *dev) {
 int bc95g_attach(struct bc95g *dev) {
     //  Attach to the NB-IoT network.  Return 0 if successful.
     internal_timeout(BC95G_CONNECT_TIMEOUT);
-    return (        
-        //  [Phase 1] Attach to network
-        attach_to_network(dev)
-    ) ? 0 : dev->last_error;
+
+    return         
+        //  is device is already attached ? [Phase 1] Attach to network
+        (wait_for_attach(dev, 2)) ? 0 : (attach_to_network(dev)) ? 0 : dev->last_error;
+    ;
 }
 
 int bc95g_detach(struct bc95g *dev) {
@@ -656,9 +662,14 @@ int bc85g_get_time_and_date(struct bc95g *dev, struct clocktime *ct, struct os_t
 
     bool res = send_query_time(dev, CCLK, ct, &gmt_quarters_diff);
 
-    if (!res) { return false; }  //  If send failed, quit.
+    if (!res) { return -1; }  //  If send failed, quit.
 
     ct->year += 2000;
+    ct->dow = 0;
+    ct->usec = 0;
+
+    //gmt_quarters_diff indicates the difference, expressed in quarters of an hour, 
+    //between the local time and GMT; and range is -96~+96)
     tz->tz_minuteswest = (int16_t)gmt_quarters_diff * 15;
 
     clocktime_to_timeval(ct, NULL, &timeval);
@@ -781,7 +792,7 @@ static int read_rx_command(struct bc95g *dev, struct bc95g_socket *socket, const
 
     bool res = (
         send_atp(dev) &&
-        parser.send("NSORF=%d,%d", local_port, length) && 
+        parser.send("NSORF=%d,%d", local_port, length) &&
         parser.recv("%d,%s,%d,%d,%x,", &local_port_response, remote_ipaddr, &remote_port, &rec_length, data, &rec_length_remain) &&
         parser.recv("OK")
     );
