@@ -34,7 +34,7 @@ extern "C" {
 //  Allocate the next unused Sensor Type ID.
 #define SENSOR_TYPE_AMBIENT_TEMPERATURE_RAW SENSOR_TYPE_USER_DEFINED_1
 #define SENSOR_TYPE_GEOLOCATION             SENSOR_TYPE_USER_DEFINED_2
-#define SENSOR_TYPE_VOLTAGE                 SENSOR_TYPE_USER_DEFINED_2
+#define SENSOR_TYPE_VOLTAGE                 SENSOR_TYPE_USER_DEFINED_3
 
 //  Raw Temperature Sensor: Instead of floating-point computed temperature, we transmit the
 //  raw temperature value as integer to the Collector Node and CoAP Server to reduce message

@@ -28,7 +28,7 @@
 #include "console/console.h"
 #include "hal/hal_gpio.h"
 #include "app_gpio.h"
-//#include "publisher.h"
+#include "collector.h"
 
 int button_device[2] = {
 	USER_BLUE_BUTTON,
@@ -36,34 +36,27 @@ int button_device[2] = {
 	// BUTTON_3,
 	// BUTTON_4,
 };
-
+/*
 int led_device[2] = {
 	LED_RED_PIN,
 	LED_BLUE_PIN,
 	// LED_3,
 	// LED_4,
 };
-
+*/
 static struct os_callout button_work;
 
-void publish(struct os_event *work){
-
-	if(hal_gpio_read(USER_BLUE_BUTTON)==true){
-        console_printf("BUTTON == true\n");
-    }else{
-        console_printf("BUTTON == false\n");
-    }
-}
 
 static void button_pressed(struct os_event *ev){
 	
 	os_callout_reset(&button_work, 0);
-
+/*
     if(hal_gpio_read(USER_BLUE_BUTTON)==true){
         hal_gpio_write(led_device[0], 1);
     }else{
         hal_gpio_write(led_device[0], 0);
     }
+*/
 }
 
 static struct os_event button_event;
@@ -78,20 +71,23 @@ static void gpio_irq_handler(void *arg)
 void app_gpio_init(void)
 {
 	/* LEDs configiuratin & setting */
-
+/*
 	hal_gpio_init_out(led_device[0], 0);
 	hal_gpio_init_out(led_device[1], 0);
-
+*/
 	/* Buttons configiuratin & setting */
 
-	os_callout_init(&button_work, os_eventq_dflt_get(), publish, NULL);
+	os_callout_init(&button_work, os_eventq_dflt_get(), send_datacollector, NULL);
 
 	button_event.ev_cb = button_pressed;
 
 	hal_gpio_irq_init(button_device[0], gpio_irq_handler, NULL,
-			  HAL_GPIO_TRIG_BOTH, HAL_GPIO_PULL_NONE);
+			  HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
 
-	hal_gpio_irq_enable(button_device[0]);
+	
+	if(start_datacollector()==0){
+		hal_gpio_irq_enable(button_device[0]);
+	}
 
 }
 

@@ -37,9 +37,39 @@ pkg.deps:
 #   "pkg.deps.xxx" refers to packages that should be included only if option "xxx" is
 #   enabled in targets/bluepill_my_sensor/syscfg.yml or apps/my_sensor_app/syscfg.yml
 
+# Quectel BC95-G NB-IoT driver
+pkg.deps.BC95G:
+    - "libs/bc95g"                         #  Quectel BC95-G NB-IoT driver
+
+# Driver for Remote Sensor that receives sensor data via nRF24L01 and CoAP
+pkg.deps.REMOTE_SENSOR:
+    - "libs/remote_sensor"                 #  Driver for Remote Sensor that receives sensor data via nRF24L01 and CoAP
+
+# Sensor Network library
+pkg.deps.SENSOR_NETWORK:
+    - "libs/sensor_network"                #  Sensor Network library
+
+# CoAP library for transmitting sensor data to CoAP server
+pkg.deps.CUSTOM_COAP:
+    - "libs/custom_coap"                   #  CoAP library for transmitting sensor data
+
 # HMAC PRNG pseudorandom number generator library
 pkg.deps.HMAC_PRNG:
     - "libs/hmac_prng"                     #  HMAC PRNG pseudorandom number generator
+
+# Library for positionning
+pkg.deps.GPS_DEVICE:
+    - "libs/gps_neo6m"                      #  GPS
+
+pkg.deps.ADC_1:
+    - "libs/adc_stm32l4"                    # start ADC converision to get actual VDD on board
+
+# Sensor Driver for STM32 internal temperature sensor for STM32, based on ADC
+pkg.deps.TEMP_STM32:
+    - "libs/temp_stm32"                    #  Internal temperature sensor for STM32, based on ADC
+
+pkg.deps.VDD_STM32:
+    - "libs/vdd_board"                    #  STM32 Internal vdd reading from ADC
 
 # Library for Semihosting Console
 pkg.deps.SEMIHOSTING_CONSOLE:

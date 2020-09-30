@@ -15,22 +15,101 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-#
 
-# Settings this app defines.
+# System Configuration Setting Definitions:
+#   Below are the settings defined by this app and their default values. To change the settings, 
+#   edit the target config file at targets/bluepill_my_sensor/syscfg.yml.  
+#   Strings must be enclosed by '"..."'
+
 syscfg.defs:
+    # List of Settings
+    BC95G:
+        description: 'Enable NB-IoT access with Quectel BC95-G'
+        value:        0        
+    VDD_DEVICE: 
+        description: 'Sensor device for vdd measurmeent'
+        value:       UNDEFINED_SENSOR_DEVICE
+    REMOTE_SENSOR:
+        description: 'Enable driver for Remote Sensor that receives sensor data via nRF24L01 and CoAP'
+        value:        0        
+    SENSOR_NETWORK:
+        description: 'Enable Sensor Network library'
+        value:        0
+    CUSTOM_COAP:
+        description: 'Send custom data to COAP Server' 
+        value:        0  
     HMAC_PRNG:
         description: 'Generate pseuorandom numbers with HMAC. Based on TinyCrypt HMAC PRNG. Requires "temp_stm32" driver for internal temperature sensor as source of entropy.'
         value:        0
+    ADC_1:
+        description: 'Enable port ADC1 for STM32F1xx microcontrollers (blocking reads only, without DMA)'
+        value:        0
+    TEMP_STM32:
+        description: 'Enable STM32 internal temperature sensor based on ADC'
+        value:        0
+    VDD_STM32:
+        description: 'Use internal adc to get vdd voltage' 
+        value:        0           
+    RAW_TEMP:
+        description: 'Use raw temperature (integer) instead of floating-point temperature values, to reduce ROM size'
+        value:        0        
+    GPS_DEVICE:      
+        description:  'Use gps to get my position and UTC time'
+        value:        UNDEFINED_GPS_DEVICE
+    GPS_POLL_TIME:      
+        description:  'periodic queyring of gps device'
+        value:        20 * 1000
     SEMIHOSTING_CONSOLE:
         description: 'Use Arm Semihosting to display console messages. Works with STLink V2 and OpenOCD'
         value:        1  # Default console is Arm Semihosting
     PAYLOAD_USE_TINYCRYPT:
         description: 'Use tinycrypt lib to compute an unique id and to authenticate payload'
         value:        1  # Default console is Arm Semihosting
+    
+# System Configuration Setting Values:
+#   Below we override the driver and library settings. Settings defined in
+#   targets/bluepill_my_sensor/syscfg.yml will override the settings below.
 
-# Settings this app overrides.
 syscfg.vals:
+    ###########################################################################
+    # CoAP Server Settings
+
+    # CoAP host e.g. 104.199.85.211 (for coap.thethings.io)
+    COAP_HOST:      '"46.101.248.55"'
+
+    # CoAP UDP port, usually port 5683
+    COAP_PORT:      5683
+
+    # CoAP URI e.g. v2/things/IVRiBCcR6HPp_CcZIFfOZFxz_izni5xc_KO-kgSA2Y8 (for thethings.io, the last part is the Thing Token)
+    COAP_URI:       '"sgati"'
+
+    ###########################################################################
+    # VDD Sensor device is the STM32 Internal Vdd measurement
+    VDD_DEVICE:     '"vdd_board_0"' 
+
+    ###########################################################################
+    # GPS Settings
+    GPS_DEVICE:         '"gps_neo6m"'
+    GPS_POLL_TIME:      (60 * 1000)
+
+    ###########################################################################
+    # Network Settings
+    NBIOT_BAND:             20  # Connect to this NB-IoT band
+    SENSOR_NETWORK:         1  # Enable Sensor Network library
+    SENSOR_COAP:            0  # Send sensor data to CoAP server
+    CUSTOM_COAP:            1
+    COAP_JSON_ENCODING:     0  # Use JSON to encode CoAP payload for forwarding to thethings.io
+    RAW_TEMP:               0  # Use raw temperature (integer) instead of floating-point temperature values, to reduce ROM size
+
+    ###########################################################################
+    # Hardware Settings
+    BC95G:                  1  # Enable Quectel BC95-G NB-IoT driver
+    HMAC_PRNG:              1  # Enable HMAC PRNG pseudorandom number generator
+    # ADC / TEMP / VDD
+    ADC_1:                  1  # Enable port ADC1 for internal temperature sensor
+    TEMP_STM32:             0  # Enable Blue Pill internal temperature sensor
+    VDD_STM32:              1
+        
     ###########################################################################
     # OIC Settings for CoAP Transmission
     OC_CLIENT:              1  # Enable the OIC (CoAP) client library
