@@ -27,13 +27,13 @@ syscfg.vals:
 
     # CoAP host e.g. 104.199.85.211 (for coap.thethings.io)
     # '"161.35.27.253"'
-    COAP_HOST:      '"46.101.248.55"'
+    # COAP_HOST:      '"46.101.248.55"'
 
     # CoAP UDP port, usually port 5683
-    COAP_PORT:      5683
+    # COAP_PORT:      5683
 
     # CoAP URI e.g. v2/things/IVRiBCcR6HPp_CcZIFfOZFxz_izni5xc_KO-kgSA2Y8 (for thethings.io, the last part is the Thing Token)
-    COAP_URI:       '"sgati"'
+    # COAP_URI:       '"sgati"'
 
     ###########################################################################
     # Sensor Settings
@@ -56,22 +56,22 @@ syscfg.vals:
     ###########################################################################
     # Network Settings
 
-    NBIOT_BAND:             20  # Connect to this NB-IoT band
-    SENSOR_NETWORK:         0  # Enable Sensor Network library
-    SENSOR_COAP:            0  # Send sensor data to CoAP server
-    CUSTOM_COAP:            1  # Send position data to CoAP server
-    COAP_JSON_ENCODING:     1  # Use JSON to encode CoAP payload for forwarding to thethings.io
-    COAP_CBOR_ENCODING:     0
-    RAW_TEMP:               1  # Use raw temperature (integer) instead of floating-point temperature values, to reduce ROM size
+    # NBIOT_BAND:             20  # Connect to this NB-IoT band
+    # SENSOR_NETWORK:         0  # Enable Sensor Network library
+    # SENSOR_COAP:            0  # Send sensor data to CoAP server
+    # CUSTOM_COAP:            1  # Send position data to CoAP server
+    # COAP_JSON_ENCODING:     1  # Use JSON to encode CoAP payload for forwarding to thethings.io
+    # COAP_CBOR_ENCODING:     0
+    # RAW_TEMP:               1  # Use raw temperature (integer) instead of floating-point temperature values, to reduce ROM size
 
     ###########################################################################
     # Hardware Settings
      
-    BC95G:                  1  # Enable Quectel BC95-G NB-IoT driver    
-    TEMP_STUB:              0  # Enable stub temperature sensor
-    TEMP_STM32:             0  # Disable Blue Pill internal temperature sensor
-    ADC_1:                  1  # Disable port ADC1
-    HMAC_PRNG:              0  # Disable HMAC PRNG pseudorandom number generator
+    # BC95G:                  1  # Enable Quectel BC95-G NB-IoT driver    
+    # TEMP_STUB:              0  # Enable stub temperature sensor
+    # TEMP_STM32:             0  # Disable Blue Pill internal temperature sensor
+    # ADC_1:                  1  # Disable port ADC1
+    # HMAC_PRNG:              0  # Disable HMAC PRNG pseudorandom number generator
 
 
     ###########################################################################
