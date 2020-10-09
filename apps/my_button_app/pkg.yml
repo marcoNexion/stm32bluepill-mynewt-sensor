@@ -79,6 +79,9 @@ pkg.deps.SEMIHOSTING_CONSOLE:
 pkg.deps.PAYLOAD_USE_TINYCRYPT:
     - "@apache-mynewt-core/crypto/tinycrypt"   #  TinyCrypt library
 
+pkg.deps.ACCELEROMETER_ADXL362:
+    - "libs/accel_adxl362"
+
 #  C compiler flags
 pkg.cflags:
     - -DFLOAT_SUPPORT         #  For encoding floats in CoAP messages

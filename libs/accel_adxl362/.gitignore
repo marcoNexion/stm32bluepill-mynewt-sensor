@@ -25,23 +25,9 @@ tags
 .gdb_history
 .gdb_out
 .gdb_cmds
+.gdbinit
 *~
 .DS_Store
 *.swp
 *.swo
-.vscode/ipch/
-openocd
-project.state
-**/*.rs.bk
-# .#*
-# .gdb_history
-Cargo.lock
-target/
-OLDrust
-tmprustlib
-*.7z
-xPack*/
-libftdi1*/
-libftdi1*.bz2
-libusb*/
-hidapi*/
+

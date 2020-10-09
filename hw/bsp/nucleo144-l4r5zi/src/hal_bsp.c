@@ -18,6 +18,7 @@
 #include "mcu/stm32l4xx_mynewt_hal.h"
 #include "mcu/stm32_hal.h"
 #include "hal/hal_i2c.h"
+#include "hal/hal_spi.h"
 
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
 #include <hal/hal_spi.h>
@@ -102,6 +103,19 @@ static const struct stm32_uart_cfg uart_gps_cfg = {
     .suc_irqn = USART3_IRQn
     
 #endif
+};
+#endif
+
+
+/* NOTE: ACCELEROMETER ADXL362 */
+/* The numbers in the switch below are offset by 1, */
+/* because the HALs index SPI ports from 0.*/
+#if MYNEWT_VAL(SPI_1)
+struct stm32_hal_spi_cfg spi1_cfg = {
+    .sck_pin  = MCU_GPIO_PORTA(5),
+    .miso_pin = MCU_GPIO_PORTA(11),
+    .mosi_pin = MCU_GPIO_PORTA(12),
+    .irq_prio = 2,
 };
 #endif
 
@@ -223,7 +237,7 @@ void hal_system_clock_start(void){
 
     PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_MSI;
     PeriphClkInit.PLLSAI1.PLLSAI1M = 1;
-    PeriphClkInit.PLLSAI1.PLLSAI1N = 60;
+    PeriphClkInit.PLLSAI1.PLLSAI1N = 24;
     PeriphClkInit.PLLSAI1.PLLSAI1P = RCC_PLLP_DIV2;
     PeriphClkInit.PLLSAI1.PLLSAI1Q = RCC_PLLQ_DIV2;
     PeriphClkInit.PLLSAI1.PLLSAI1R = RCC_PLLR_DIV2;
@@ -277,6 +291,11 @@ hal_bsp_init(void)
 
 #if MYNEWT_VAL(TIMER_0)
     rc = hal_timer_init(0, TIM2);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(SPI_1)
+    rc = hal_spi_init(0, &spi1_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
 #endif
 

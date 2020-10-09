@@ -64,7 +64,10 @@ syscfg.defs:
         value:        1  # Default console is Arm Semihosting
     PAYLOAD_USE_TINYCRYPT:
         description: 'Use tinycrypt lib to compute an unique id and to authenticate payload'
-        value:        1  # Default console is Arm Semihosting
+        value:        1
+    ACCELEROMETER_ADXL362:
+        description: 'Use accelerometer as sensor to get 3 axis acceleration'
+        value:        1 #Enabled by Default 
     
 # System Configuration Setting Values:
 #   Below we override the driver and library settings. Settings defined in

@@ -76,7 +76,8 @@
 			"console.h": "c",
 			"sensor_helper.h": "c",
 			"network.h": "c",
-			"time.h": "c"
+			"time.h": "c",
+			"adxl362reg.h": "c"
 		},
 		"rust.racer_completion": false
 	}
