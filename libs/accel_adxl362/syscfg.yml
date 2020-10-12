@@ -64,7 +64,7 @@ syscfg.defs:
 syscfg.vals:
     ADXL632_CS_PIN:         ((0 * 16) + (10))   #todo : set value into your bsp
     ADXL362_INT_ENABLE:     1
-    ADXL362_INT_PIN_HOST:   ((5 * 16) + (10))   #todo : set value into your bsp
+    ADXL362_INT_PIN_HOST:   ((5 * 16) + (15))   #todo : set value into your bsp
     ADXL362_INT_PIN_DEVICE: 1
-    ADXL362_INT_CFG_ACTIVE: 0
+    ADXL362_INT_CFG_ACTIVE: 1
 

@@ -44,7 +44,7 @@ static struct hal_spi_settings spi_adxl362_settings = {
 };
 
 enum adxl362_accel_range selectedRange = 0;
-
+uint16_t sampleRate=100;
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Logging Functions: Put common strings here to reduce space.
@@ -432,7 +432,7 @@ adxl362_set_accel_range(struct sensor_itf *itf, enum adxl362_accel_range range)
     newFilterCtl = newFilterCtl | ADXL362_FILTER_CTL_RANGE(range);
     adxl362_write8(itf, ADXL362_REG_FILTER_CTL, (uint8_t)newFilterCtl);
 
-    selectedRange = range;
+    selectedRange = 1<<(1+range);
 
     return 0;
 }
@@ -448,7 +448,10 @@ adxl362_set_accel_range(struct sensor_itf *itf, enum adxl362_accel_range range)
 int
 adxl362_get_accel_range(struct sensor_itf *itf, enum adxl362_accel_range *range)
 {
-    *range = selectedRange;
+    adxl362_read8(itf, ADXL362_REG_FILTER_CTL, range);
+
+    *range = (*range & 0xC0)>>6;
+    selectedRange = 1<<(1+*range);
 
     return 0;
 }
@@ -463,7 +466,7 @@ adxl362_get_accel_range(struct sensor_itf *itf, enum adxl362_accel_range *range)
  *                    Example: 0 - absolute mode.
  *                             1 - referenced mode.
  * @param threshold value
- * @param time value in seconds
+ * @param time value in miliseconds
  *
  * @return 0 on success, non-zero error on failure.
  */
@@ -479,6 +482,9 @@ adxl362_set_active_settings(struct sensor_itf *itf, bool enables, bool refMode,
     if(rc){ 
         return rc;
     }
+
+    /* Set Linked mode */
+    reg |= ADXL362_ACT_INACT_CTL_LINKLOOP(0x1);
 
     if(enables){
         /*set only inact enable bit*/
@@ -512,7 +518,7 @@ adxl362_set_active_settings(struct sensor_itf *itf, bool enables, bool refMode,
     }
 
     /* writes active time register*/
-    rc = adxl362_write8(itf, ADXL362_REG_TIME_ACT, (uint8_t)time);
+    rc = adxl362_write8(itf, ADXL362_REG_TIME_ACT, (uint8_t)((time/1000)*sampleRate));
     if(rc){ 
         return rc;
     }
@@ -528,7 +534,7 @@ adxl362_set_active_settings(struct sensor_itf *itf, bool enables, bool refMode,
  *                    Example: 0 - absolute mode.
  *                             1 - referenced mode.
  * @param threshold value
- * @param time value in seconds
+ * @param time value in miliseconds
  *
  * @return 0 on success, non-zero error on failure.
  */
@@ -553,6 +559,7 @@ adxl362_get_active_settings(struct sensor_itf *itf, bool *enables, bool *refMode
     if(rc){ 
         return rc;
     }
+    *time = ((*time/sampleRate)*1000);
 
     rc = adxl362_read8(itf, ADXL362_REG_ACT_INACT_CTL, &reg);
     if(rc){ 
@@ -574,7 +581,7 @@ adxl362_get_active_settings(struct sensor_itf *itf, bool *enables, bool *refMode
  *                    Example: 0 - absolute mode.
  *                             1 - referenced mode.
  * @param threshold value
- * @param time value in seconds
+ * @param time value in miliseconds
  *
  * @return 0 on success, non-zero error on failure.
  */
@@ -591,6 +598,9 @@ adxl362_set_inactive_settings(struct sensor_itf *itf, bool enables, bool refMode
         return rc;
     }
 
+    /* Set Linked mode */
+    reg |= ADXL362_ACT_INACT_CTL_LINKLOOP(0x1);
+    
     if(enables){
         /*set only inact enable bit*/
         reg |= ADXL362_ACT_INACT_CTL_INACT_EN;
@@ -623,11 +633,12 @@ adxl362_set_inactive_settings(struct sensor_itf *itf, bool enables, bool refMode
     }
 
     /* writes inactive time register*/
+    time = ((time/1000)*sampleRate);
     rc = adxl362_write8(itf, ADXL362_REG_TIME_INACT_L, (uint8_t)(time&0x00FF));
     if(rc){ 
         return rc;
     }
-    rc = adxl362_write8(itf, ADXL362_REG_TIME_INACT_H, (uint8_t)((time&0x0700)>>8)); 
+    rc = adxl362_write8(itf, ADXL362_REG_TIME_INACT_H, (uint8_t)((time&0xFF00)>>8)); 
 
     return rc;
 }
@@ -636,8 +647,8 @@ adxl362_set_inactive_settings(struct sensor_itf *itf, bool enables, bool refMode
  * Gets current threshold and time set for triggering inactivity interrupt
  *
  * @param The sensor interface
- * @param Pointer to store threshold value (62.5mg/LSB)
- * @param Ponter to store time value in seconds
+ * @param Pointer to store threshold value
+ * @param Ponter to store time value in miliseconds
  *
  * @return 0 on success, non-zero error on failure.
  */
@@ -667,6 +678,7 @@ adxl362_get_inactive_settings(struct sensor_itf *itf, bool *enables, bool *refMo
         return rc;
     }
     *time = (((uint16_t)timeH<<8)&0xFF00) | (uint16_t)timeL;
+    *time = ((*time/sampleRate)*1000);
 
     rc = adxl362_read8(itf, ADXL362_REG_ACT_INACT_CTL, &reg);
     if(rc){ 
@@ -705,6 +717,28 @@ adxl362_set_sample_rate(struct sensor_itf *itf, enum adxl362_sample_rate rate)
     }
     newFilterCtl = oldFilterCtl & ~ADXL362_FILTER_CTL_ODR(0x7);
     newFilterCtl = newFilterCtl | ADXL362_FILTER_CTL_ODR(rate);
+
+    switch(rate){
+        case ADXL362_ODR_12_5_HZ:
+                                sampleRate = 12;
+                                break;            
+        case ADXL362_ODR_25_HZ:
+                                sampleRate = 25;
+                                break;
+        case ADXL362_ODR_50_HZ:
+                                sampleRate = 50;
+                                break;
+        default:
+        case ADXL362_ODR_100_HZ:
+                                sampleRate = 100;
+                                break;
+        case ADXL362_ODR_200_HZ:
+                                sampleRate = 200;
+                                break;
+        case ADXL362_ODR_400_HZ:
+                                sampleRate = 400;
+                                break;
+    }
 
     return adxl362_write8(itf, ADXL362_REG_FILTER_CTL, (uint8_t) newFilterCtl);
 }
@@ -752,7 +786,7 @@ adxl362_setup_interrupts(struct sensor_itf *itf, uint8_t enables, uint8_t mappin
         if (rc) {
             return rc;
         }
-        reg = (reg & ADXL362_INTMAP1_INT_LOW) | enables;
+        reg = (reg & (~ADXL362_INTMAP1_INT_LOW)) | enables;
 
         return adxl362_write8(itf, ADXL362_REG_INTMAP1, reg);
     
@@ -762,7 +796,7 @@ adxl362_setup_interrupts(struct sensor_itf *itf, uint8_t enables, uint8_t mappin
     if (rc) {
         return rc;
     }
-    reg = (reg & ADXL362_INTMAP2_INT_LOW) | enables;
+    reg = (reg & (~ADXL362_INTMAP2_INT_LOW)) | enables;
 
     return adxl362_write8(itf, ADXL362_REG_INTMAP2, reg);
 }
@@ -866,6 +900,7 @@ adxl362_init(struct os_dev *dev, void *arg)
     if (rc != 0) {
         return rc;
     }
+
 #endif
 
     
@@ -922,13 +957,13 @@ adxl362_config(struct adxl362 *dev, struct adxl362_cfg *cfg)
 
     /* Setup interrupt polarity */
     rc = adxl362_write8(itf, ADXL362_REG_INTMAP1, 
-                        dev->sensor.s_itf.si_ints[dev->pdd.int_num].active ? ADXL362_INTMAP1_INT_LOW : 0x0);
+                        dev->sensor.s_itf.si_ints[dev->pdd.int_num].active ? 0x0 : ADXL362_INTMAP1_INT_LOW);
     if (rc) {
         return rc;
     }
 
     rc = adxl362_write8(itf, ADXL362_REG_INTMAP2, 
-                        dev->sensor.s_itf.si_ints[dev->pdd.int_num].active ? ADXL362_INTMAP2_INT_LOW : 0x0);
+                        dev->sensor.s_itf.si_ints[dev->pdd.int_num].active ? 0x0 : ADXL362_INTMAP2_INT_LOW);
     if (rc) {
         return rc;
     }
@@ -946,28 +981,19 @@ adxl362_config(struct adxl362 *dev, struct adxl362_cfg *cfg)
         return rc;
     }
     dev->cfg.sample_rate = cfg->sample_rate;
-#if 0    
+
     /* setup activity detection settings */
-    rc = adxl362_set_active_threshold(itf, 0xFF);
+    rc = adxl362_set_active_settings(itf, 1, 1, cfg->active_threshold, cfg->active_time_ms);
+    if (rc) {
+        return rc;
+    }
+
+    /* setup inactivity detection settings */
+    rc = adxl362_set_inactive_settings(itf, 1, 1, cfg->inactive_threshold, cfg->inactive_time_ms);
     if (rc) {
         return rc;
     }
     
-    rc = adxl362_set_inactive_settings(itf, 0, 0, 0);
-    if (rc) {
-        return rc;
-    }
-#endif
-    /* setup freefall settings */
-#ifdef UNUSED
-    rc = adxl362_set_freefall_settings(itf, cfg->freefall_threshold, cfg->freefall_time);
-    if (rc) {
-        return rc;
-    }
-    dev->cfg.freefall_threshold = cfg->freefall_threshold;
-    dev->cfg.freefall_time = cfg->freefall_time;
-#endif
-
     /* setup low power mode */
     rc = adxl362_set_low_power_enable(itf, cfg->low_power_enable);
     if (rc) {
@@ -976,7 +1002,9 @@ adxl362_config(struct adxl362 *dev, struct adxl362_cfg *cfg)
     dev->cfg.low_power_enable = cfg->low_power_enable;
     
     /* setup default interrupt config */
-    rc = adxl362_setup_interrupts(itf, 0, 0);
+    /* use only INTMAP1 for now */
+    /* device's interrupt disabled by default */
+    rc = adxl362_setup_interrupts(itf, 0x0, 1);
     if (rc) {
         return rc;
     }
@@ -1113,6 +1141,7 @@ adxl362_sensor_get_config(struct sensor *sensor, sensor_type_t type,
 static void
 interrupt_handler(void * arg)
 {
+    //asm("bkpt");
     struct sensor *sensor = arg;
     sensor_mgr_put_interrupt_evt(sensor);
 }
@@ -1149,11 +1178,13 @@ init_intpin(struct adxl362 * adxl362, hal_gpio_irq_handler_t handler,
     }
 
     pdd->int_num = i;
-    if (adxl362->sensor.s_itf.si_ints[pdd->int_num].active) {
+/*    if (adxl362->sensor.s_itf.si_ints[pdd->int_num].active) {
         trig = HAL_GPIO_TRIG_RISING;
     } else {
         trig = HAL_GPIO_TRIG_FALLING;
     }
+*/
+    trig = HAL_GPIO_TRIG_BOTH;
   
     if (adxl362->sensor.s_itf.si_ints[pdd->int_num].device_pin > 2) {
         console_printf("Route not configured\n");
@@ -1170,7 +1201,10 @@ init_intpin(struct adxl362 * adxl362, hal_gpio_irq_handler_t handler,
     if (rc != 0) {
         console_printf("Failed to initialise interrupt pin %d\n", pin);
         return rc;
-    } 
+    }
+    
+    /* disable interrupt for now */
+    hal_gpio_irq_disable(pin);
     
     return 0;
 }
@@ -1276,10 +1310,26 @@ adxl362_sensor_handle_interrupt(struct sensor * sensor)
     }
 
     if (pdd->registered_mask & ADXL362_NOTIFY_MASK) {
-        if (int_status & ADXL362_STATUS_AWAKE) {
-            sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_ORIENT_CHANGE);
-        }
+        sensor_mgr_put_notify_evt(&pdd->notify_ctx, 
+                ((int_status & ADXL362_STATUS_INACT) != 0)?SENSOR_EVENT_TYPE_SLEEP : SENSOR_EVENT_TYPE_WAKEUP);
     }
+
+    /* revert interrupt polarity on INT1 MAP !*/
+    /*
+    uint8_t reg;
+    rc = adxl362_read8(itf, ADXL362_REG_INTMAP1, &reg);
+    if (rc) {
+        return rc;
+    }
+    if((reg & ADXL362_INTMAP1_INT_LOW)){
+        reg &= ~ADXL362_INTMAP1_INT_LOW;
+    }else{
+        reg |=ADXL362_INTMAP1_INT_LOW;
+    }
+    rc = adxl362_write8(itf, ADXL362_REG_INTMAP1, reg);
+    if (rc) {
+        return rc;
+    }*/
 
     /*TODO know what is it for ???*/
     if ((pdd->registered_mask & ADXL362_READ_MASK) &&
@@ -1352,7 +1402,7 @@ adxl362_sensor_set_trigger_thresh(struct sensor * sensor,
         }
 
         rc = adxl362_set_inactive_settings(itf, 1, 1,
-                adxl362_convert_ms2_to_reg(thresh, (selectedRange / 2)), 2000);
+                adxl362_convert_ms2_to_reg(thresh, selectedRange/2), 2000);
         
         if (rc) {
             return rc;
@@ -1383,7 +1433,7 @@ adxl362_sensor_set_trigger_thresh(struct sensor * sensor,
         }
 
         rc = adxl362_set_active_settings(itf, 1, 1,
-                adxl362_convert_ms2_to_reg(thresh, (selectedRange / 2)), 2000);
+                adxl362_convert_ms2_to_reg(thresh, selectedRange/2), 2000);
         if (rc) {
             return rc;
         }
@@ -1489,7 +1539,9 @@ adxl362_sensor_set_notification(struct sensor * sensor,
     console_printf("Enabling notifications\n");
     
     /*XXX for now we do not support anything else */
-    if ((sensor_event_type & (~SENSOR_EVENT_TYPE_ORIENT_CHANGE)) != 0) {
+    if ((sensor_event_type & SENSOR_EVENT_TYPE_WAKEUP) == 0 &&
+        (sensor_event_type & SENSOR_EVENT_TYPE_SLEEP) == 0 
+    ) {
         return SYS_EINVAL;
     }
 
@@ -1501,9 +1553,9 @@ adxl362_sensor_set_notification(struct sensor * sensor,
     }
 
     /* Enable orientation changing event*/
-    if(sensor_event_type == SENSOR_EVENT_TYPE_ORIENT_CHANGE) {
+    //if(sensor_event_type == SENSOR_EVENT_TYPE_ORIENT_CHANGE) {
         ints_to_enable |= ADXL362_STATUS_AWAKE;
-    }
+    //}
 
     rc = enable_interrupt(sensor, ints_to_enable);
     if (rc) {

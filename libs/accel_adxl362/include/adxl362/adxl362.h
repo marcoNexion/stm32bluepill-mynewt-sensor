@@ -60,6 +60,9 @@ struct adxl362_cfg {
     uint16_t active_threshold;
     uint16_t inactive_threshold;
 
+    uint16_t active_time_ms;
+    uint16_t inactive_time_ms;
+
     sensor_type_t mask;
 };
 

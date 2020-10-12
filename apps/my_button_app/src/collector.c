@@ -25,11 +25,13 @@
 #include <console/console.h>                //  For Mynewt console output. Actually points to libs/semihosting_console
 #include <sensor/sensor.h>                  //  For Mynewt Sensor Framework
 #include <sensor/temperature.h>             //  For temperature sensor definitions
+#include <sensor/accel.h>             //  For acceleration sensor definitions
 #include <sensor_network/sensor_network.h>  //  For Sensor Network Library
 #include <custom_coap/custom_coap.h>        //  For sensor_value
 #include <custom_sensor/custom_sensor.h>    //  For sensor_temp_raw_data
 #include "network.h"                        //  For send_sensor_data()
 #include "gps_neo6m/gps_neo6m.h"    
+#include "adxl362/adxl362.h"
 
 
 static struct os_mutex collect_mtx;
@@ -54,10 +56,16 @@ static struct{
         sensor_type_t sensor_type;
         struct sensor_voltage_data board;
     }VDD;
+
+    //acceleration for motion detection
+    struct{
+        struct sensor *sensor;
+        sensor_type_t sensor_type;
+        struct sensor_accel_data accel;
+    }Motion;
     
     struct os_timeval report_time;
-    //Inclinaison
-    //TODO
+
 
 }datacollection;
 
@@ -82,19 +90,23 @@ static int store_datacollector(struct sensor* sensor, void *arg, void *databuf, 
 
     struct sensor_geolocation_data *geolocation;
     struct sensor_voltage_data *voltage;
+    struct sensor_accel_data *acceleration;
 
     switch(type){
         case SENSOR_TYPE_GEOLOCATION:
                 geolocation = (struct sensor_geolocation_data *) databuf;
-
                 datacollection.GPS.geolocation.sgd_latitude = geolocation->sgd_latitude;
                 datacollection.GPS.geolocation.sgd_longitude = geolocation->sgd_longitude;
                 break;
         
         case SENSOR_TYPE_VOLTAGE:
                 voltage = (struct sensor_voltage_data *) databuf;
-
                 datacollection.VDD.board.mV = voltage->mV;
+                break;
+
+        case SENSOR_TYPE_ACCELEROMETER:
+                acceleration = (struct sensor_accel_data*) databuf;
+                datacollection.Motion.accel = *acceleration;
                 break;
         default:
                 console_printf("unrecognized sensor type !\n");
@@ -135,6 +147,17 @@ int start_datacollector(void){
         assert(datacollection.VDD.sensor != NULL);
     }
 
+    if (strlen(ADXL362_DEVICE_NAME) == 0) {
+        console_printf("Accel sensor not defined\n");
+        return -1;
+    }else{
+        console_printf("Accel measure %s used in datacollection\n", ADXL362_DEVICE_NAME);
+        //  Fetch the vdd sensor by name, without locking the driver for exclusive access.
+        datacollection.Motion.sensor = sensor_mgr_find_next_bydevname(ADXL362_DEVICE_NAME, NULL);
+        datacollection.Motion.sensor_type = SENSOR_TYPE_ACCELEROMETER;
+        assert(datacollection.Motion.sensor != NULL);
+    }
+
     //datacollector use a mutex to prevent concurrency calls
     os_mutex_init(&collect_mtx);
 
@@ -165,6 +188,14 @@ void send_datacollector(struct os_event *work){
                      OS_TIMEOUT_NEVER);
     if (rc) {
         console_printf("Cannot read %s\n", MYNEWT_VAL(VDD_DEVICE));
+        //return 0;
+    }
+
+    rc = sensor_read(datacollection.Motion.sensor, datacollection.Motion.sensor_type,
+                     store_datacollector, (void *)SENSOR_IGN_LISTENER,
+                     OS_TIMEOUT_NEVER);
+    if (rc) {
+        console_printf("Cannot read %s\n", ADXL362_DEVICE_NAME);
         //return 0;
     }
 
@@ -211,9 +242,10 @@ void send_datacollector(struct os_event *work){
     rc = send_plain_text_data(str);
 
     //  SYS_EAGAIN means that the network is still starting up. We send at the next poll.
-    //if (rc == SYS_EAGAIN) { return 0; }
-    assert(rc == 0);
-
+    if (rc == SYS_EAGAIN){
+        console_printf("Network is still starting up\n");    
+    }
+    
     collect_unlock();
     return;
 }

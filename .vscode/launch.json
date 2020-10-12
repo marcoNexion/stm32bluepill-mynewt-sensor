@@ -31,7 +31,7 @@
                 "debugServerArgs": "-f interface\\stlink-v2.cfg -f target\\stm32l4x.cfg -c init -c \"reset init\"",
                 "serverLaunchTimeout":20000,
                 "filterStderr":true,
-                "filterStdout":false,
+                "filterStdout":true,
                 "serverStarted":"target halted due to debug-request, current mode: Thread",
                 "setupCommands":[
                     {

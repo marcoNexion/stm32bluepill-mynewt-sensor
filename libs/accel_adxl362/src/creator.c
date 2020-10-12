@@ -47,7 +47,7 @@ static struct sensor_itf spi_1_itf_adxl = {
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Generic Device Creator Code based on repos\apache-mynewt-core\hw\sensor\creator\src\sensor_creator.c
-const char *_accel = "ACCEL. ";  //  Trailer for console output
+const char *_accel = "ACCEL.";  //  Trailer for console output
 
 static int config_adxl362_sensor(void);
 
@@ -84,6 +84,12 @@ static int config_adxl362_sensor(void) {
     cfg.low_power_enable = 1;
     cfg.accel_range = ADXL362_ACCEL_RANGE_4;
     cfg.sample_rate = ADXL362_ODR_12_5_HZ;
+
+    cfg.active_threshold = 250; //TODO : caracterization
+    cfg.active_time_ms = 500;
+
+    cfg.inactive_threshold = 150;
+    cfg.inactive_time_ms = 5000;  //TODO : fix time issue : 5s means 13s...
 
     cfg.mask = SENSOR_TYPE_ACCELEROMETER;
 

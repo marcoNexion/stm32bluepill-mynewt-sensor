@@ -26,6 +26,7 @@
 #include <os/os.h>            //  For Mynewt OS functions
 #include <console/console.h>  //  For Mynewt console output. Actually points to libs/semihosting_console
 #include "app_gpio.h"
+#include "motionDetect.h"
 
 int main(int argc, char **argv) {
     //  Main program that initialises the sensor, network driver and starts reading 
@@ -40,6 +41,8 @@ int main(int argc, char **argv) {
 
     //  Starting polling the position sensor every N seconds in the background.
     app_gpio_init();
+
+    start_motion_detector();
 
     //  Main event loop
     while (true) {                //  Loop forever...
