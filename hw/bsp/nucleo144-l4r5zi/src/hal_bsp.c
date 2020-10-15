@@ -193,8 +193,9 @@ void hal_system_clock_start(void){
 
     /**Initializes the CPU, AHB and APB busses clocks
      */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSE | RCC_OSCILLATORTYPE_MSI;
-    RCC_OscInitStruct.LSEState = RCC_LSE_ON;
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_MSI;
+    RCC_OscInitStruct.LSEState = RCC_LSE_OFF;
+    RCC_OscInitStruct.LSIState = RCC_LSI_ON;
     RCC_OscInitStruct.MSIState = RCC_MSI_ON;
     RCC_OscInitStruct.MSICalibrationValue = 0;
     RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
@@ -227,14 +228,20 @@ void hal_system_clock_start(void){
                                             RCC_PERIPHCLK_USART3 | 
                                             RCC_PERIPHCLK_LPUART1 | 
                                             RCC_PERIPHCLK_ADC |
+    #if 1//MYNEWT_VAL(OS_TICKLESS)
+                                            RCC_PERIPHCLK_LPTIM1 |
+    #endif
                                             RCC_PERIPHCLK_USB;
+
     PeriphClkInit.Lpuart1ClockSelection = RCC_LPUART1CLKSOURCE_PCLK1;
     PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
     PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
     PeriphClkInit.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
     PeriphClkInit.AdcClockSelection    = RCC_ADCCLKSOURCE_PLLSAI1;
+    #if 1//MYNEWT_VAL(OS_TICKLESS)
+    PeriphClkInit.Lptim1ClockSelection = RCC_LPTIM1CLKSOURCE_LSI;
+    #endif
     PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLLSAI1;
-
     PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_MSI;
     PeriphClkInit.PLLSAI1.PLLSAI1M = 1;
     PeriphClkInit.PLLSAI1.PLLSAI1N = 24;
@@ -252,7 +259,7 @@ void hal_system_clock_start(void){
     HAL_RCCEx_EnableMSIPLLMode();
 
 
-    HAL_RCC_MCOConfig( RCC_MCO1, RCC_MCO1SOURCE_SYSCLK, RCC_MCODIV_8);
+    HAL_RCC_MCOConfig( RCC_MCO1, RCC_MCO1SOURCE_LSI, RCC_MCODIV_1);
 
 
 }
@@ -290,7 +297,7 @@ hal_bsp_init(void)
 #endif
 
 #if MYNEWT_VAL(TIMER_0)
-    rc = hal_timer_init(0, TIM2);
+    rc = hal_timer_init(0, TIM1);
     assert(rc == 0);
 #endif
 

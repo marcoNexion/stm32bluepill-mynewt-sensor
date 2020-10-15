@@ -1,12 +1,3 @@
-[submodule "apache-mynewt-core"]
-	path = apache-mynewt-core
-	url = C:\\Dev\\stm32bluepill-mynewt-sensor\\repos\\apache-mynewt-core
-[submodule "apache-mynewt-mcumgr"]
-	path = apache-mynewt-mcumgr
-	url = C:\\Dev\\stm32bluepill-mynewt-sensor\\repos\\apache-mynewt-mcumgr
-[submodule "apache-mynewt-nimble"]
-	path = apache-mynewt-nimble
-	url = C:\\Dev\\stm32bluepill-mynewt-sensor\\repos\\apache-mynewt-nimble
 [submodule "mcuboot"]
 	path = mcuboot
 	url = C:\\Dev\\stm32bluepill-mynewt-sensor\\repos\\mcuboot

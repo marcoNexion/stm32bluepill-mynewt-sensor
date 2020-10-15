@@ -16,20 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#ifndef H_HAL_BSP_POWER_HANDLER_H
+#define H_HAL_BSP_POWER_HANDLER_H
 
-#ifndef H_BSP_
-#define H_BSP_
+#include <inttypes.h>
+#include "bsp/lowpowermgr.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/** Defined in MCU linker script. */
-extern uint8_t _ram_start;
+// Halt board and MCU in lowest power mode possible. Never returns
+void hal_bsp_halt();
 
-#define RAM_SIZE        0x10000
+void hal_bsp_power_hooks(LP_HOOK_t getMode, LP_HOOK_t enter, LP_HOOK_t exit);
+/** functions called from OS (os.c and hal_os_tick.c) */
+int hal_bsp_power_handler_get_mode(os_time_t ticks);
+void hal_bsp_power_handler_sleep_enter(int nextMode);
+void hal_bsp_power_handler_sleep_exit(int lastMode);
 
-/* Put additional BSP definitions here. */
 
 #ifdef __cplusplus
 }

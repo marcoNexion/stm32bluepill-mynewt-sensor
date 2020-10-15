@@ -24,6 +24,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <sysinit/sysinit.h>                //  Contains all app settings consolidated from "apps/my_sensor_app/syscfg.yml" and "targets/bluepill_my_sensor/syscfg.yml"
+
+#if MYNEWT_VAL(ACCELEROMETER_ADXL362)
+
 #include "bsp/bsp.h"
 #include <console/console.h>  //  For Mynewt console output. Actually points to libs/semihosting_console
 #include <sensor/sensor.h>    //  For Mynewt Sensor Framework
@@ -85,3 +89,4 @@ static int motion_detected(struct sensor* sensor, void *arg, sensor_event_type_t
     return 0;
 
 }
+#endif

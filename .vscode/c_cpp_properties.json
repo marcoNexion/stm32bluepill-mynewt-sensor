@@ -20,7 +20,8 @@
                 "${workspaceFolder}/libs/nrf24l01/include",
                 "${workspaceFolder}/libs/semihosting_console/include",
                 "${workspaceFolder}/libs/sensor_coap/include",
-                "${workspaceFolder}/libs/sensor_network/include"
+                "${workspaceFolder}/libs/sensor_network/include",
+                "${workspaceFolder}/hw/bsp/nucleo144-l4r5zi/include"
             ],
             "defines": [
                 "APP_NAME=my_position_app",

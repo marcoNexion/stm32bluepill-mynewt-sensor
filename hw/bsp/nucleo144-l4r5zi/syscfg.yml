@@ -50,6 +50,20 @@ syscfg.defs:
         description: 'SPI1 in master mode'
         value: 1
 
+    BSP_POWER_SETUP:
+        description: 'power modes handlers called by os_tick_idle to switch between different power mode profiles'
+        value: 0
+    
+    OS_TICKLESS:
+        description: 'tickless implementation'
+        value : 0
+
+    MAX_LPCBFNS:
+        description: 'Maximum callback functions for lowpower modes subscribtors'
+        value : 1
+
+    
+
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
@@ -57,6 +71,9 @@ syscfg.vals:
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
     BOOTUTIL_MAX_IMG_SECTORS: 256
     
+    BSP_POWER_SETUP: 0
+    OS_TICKLESS: 1
+    MAX_LPCBFNS: 6
     #CONSOLE_UART_DEV: '"uart1"'
     #CONSOLE_UART_BAUD: 115200
 

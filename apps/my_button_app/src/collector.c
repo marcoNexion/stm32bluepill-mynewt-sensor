@@ -31,7 +31,10 @@
 #include <custom_sensor/custom_sensor.h>    //  For sensor_temp_raw_data
 #include "network.h"                        //  For send_sensor_data()
 #include "gps_neo6m/gps_neo6m.h"    
+
+#if MYNEWT_VAL(ACCELEROMETER_ADXL362)
 #include "adxl362/adxl362.h"
+#endif
 
 
 static struct os_mutex collect_mtx;
@@ -57,12 +60,14 @@ static struct{
         struct sensor_voltage_data board;
     }VDD;
 
+#if MYNEWT_VAL(ACCELEROMETER_ADXL362)
     //acceleration for motion detection
     struct{
         struct sensor *sensor;
         sensor_type_t sensor_type;
         struct sensor_accel_data accel;
     }Motion;
+#endif
     
     struct os_timeval report_time;
 
@@ -90,7 +95,9 @@ static int store_datacollector(struct sensor* sensor, void *arg, void *databuf, 
 
     struct sensor_geolocation_data *geolocation;
     struct sensor_voltage_data *voltage;
+#if MYNEWT_VAL(ACCELEROMETER_ADXL362)
     struct sensor_accel_data *acceleration;
+#endif
 
     switch(type){
         case SENSOR_TYPE_GEOLOCATION:
@@ -103,11 +110,12 @@ static int store_datacollector(struct sensor* sensor, void *arg, void *databuf, 
                 voltage = (struct sensor_voltage_data *) databuf;
                 datacollection.VDD.board.mV = voltage->mV;
                 break;
-
+#if MYNEWT_VAL(ACCELEROMETER_ADXL362)
         case SENSOR_TYPE_ACCELEROMETER:
                 acceleration = (struct sensor_accel_data*) databuf;
                 datacollection.Motion.accel = *acceleration;
                 break;
+#endif
         default:
                 console_printf("unrecognized sensor type !\n");
                 r = -1;
@@ -146,7 +154,7 @@ int start_datacollector(void){
         datacollection.VDD.sensor_type = SENSOR_TYPE_VOLTAGE;
         assert(datacollection.VDD.sensor != NULL);
     }
-
+#if MYNEWT_VAL(ACCELEROMETER_ADXL362)
     if (strlen(ADXL362_DEVICE_NAME) == 0) {
         console_printf("Accel sensor not defined\n");
         return -1;
@@ -157,7 +165,7 @@ int start_datacollector(void){
         datacollection.Motion.sensor_type = SENSOR_TYPE_ACCELEROMETER;
         assert(datacollection.Motion.sensor != NULL);
     }
-
+#endif
     //datacollector use a mutex to prevent concurrency calls
     os_mutex_init(&collect_mtx);
 
@@ -191,6 +199,7 @@ void send_datacollector(struct os_event *work){
         //return 0;
     }
 
+#if MYNEWT_VAL(ACCELEROMETER_ADXL362)
     rc = sensor_read(datacollection.Motion.sensor, datacollection.Motion.sensor_type,
                      store_datacollector, (void *)SENSOR_IGN_LISTENER,
                      OS_TIMEOUT_NEVER);
@@ -198,7 +207,7 @@ void send_datacollector(struct os_event *work){
         console_printf("Cannot read %s\n", ADXL362_DEVICE_NAME);
         //return 0;
     }
-
+#endif
     os_gettimeofday(&datacollection.UTC.time, NULL);
 
     struct custom_value datas;
