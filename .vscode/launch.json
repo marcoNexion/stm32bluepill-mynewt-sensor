@@ -12,7 +12,8 @@
             "only_position_app",
             "my_position_app",
             "my_button_app",
-            "stm32l4_my_sensor"
+            "stm32l4_my_sensor",
+            "blink"
           ],
           "default": "only_position_app"
         }],

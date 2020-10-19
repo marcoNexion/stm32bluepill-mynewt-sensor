@@ -1,5 +1,5 @@
 #include <mcu/cmsis_nvic.h>
-#include "console/console.h"
+#include <assert.h>
 #include "stm32l4xx_hal.h"
 #include "stm32l4xx_hal_lptim.h"
 #include "stm32l4xx_hal_rcc.h"

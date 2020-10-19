@@ -78,7 +78,9 @@
 			"network.h": "c",
 			"time.h": "c",
 			"adxl362reg.h": "c",
-			"lowpowermgr.h": "c"
+			"lowpowermgr.h": "c",
+			"chrono": "c",
+			"random": "c"
 		},
 		"rust.racer_completion": false
 	}

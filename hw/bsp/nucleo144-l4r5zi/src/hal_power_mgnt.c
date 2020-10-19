@@ -26,13 +26,15 @@
 #include "hal/hal_system.h"
 #include "stm32l4xx_hal_pwr.h"
 #include "bsp/hal_power_mgnt.h"
-
+#include <mcu/cmsis_nvic.h>
 #define EXT_GPIO_FOR_SLEEP_TESTING
 
 #ifdef EXT_GPIO_FOR_SLEEP_TESTING
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
-#define EXT_OUTPUT  MCU_GPIO_PORTF(12)
+#define EXT_OUTPUT  MCU_GPIO_PORTC(6)
+extern void IRQset_get_status(void);
+extern void IRQset_disable_all(void);
 #endif
 
 //extern void SystemClock_RestartPLL(void);
@@ -177,11 +179,13 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
 
     /* begin tickless */
 #if MYNEWT_VAL(OS_TICKLESS)
+    //NVIC_DisableIRQ(TIM1_UP_TIM16_IRQn);
     stm32_tickless_start(durationMS);
 #endif
 
 #ifdef EXT_GPIO_FOR_SLEEP_TESTING
     hal_gpio_write(EXT_OUTPUT, 0);
+    //IRQset_get_status();
 #endif
 
     switch (power_mode) {
@@ -227,11 +231,13 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
     }
 
 #ifdef EXT_GPIO_FOR_SLEEP_TESTING
+    //IRQset_get_status();
     hal_gpio_write(EXT_OUTPUT, 1);
 #endif
     
 #if MYNEWT_VAL(OS_TICKLESS)
     /* exit tickless low power mode */
     stm32_tickless_stop(durationMS);
+    //NVIC_EnableIRQ(TIM1_UP_TIM16_IRQn);
 #endif
 }
