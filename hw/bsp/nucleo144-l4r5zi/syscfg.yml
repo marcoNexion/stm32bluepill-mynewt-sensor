@@ -34,6 +34,10 @@ syscfg.defs:
         description: 'UART used to communicate with ublox gps receiver'
         value:  1
 
+    UART_BITBANG:
+        description: 'UartBitbang is a software uart on a gpio'
+        value:  1
+
     TIMER_0:
         description: 'Timer 0'
         value:  1

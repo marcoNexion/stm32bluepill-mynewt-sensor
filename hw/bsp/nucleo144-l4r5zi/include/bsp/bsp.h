@@ -49,6 +49,8 @@ extern uint8_t _ram_start;
 
 /* UART */
 #define UART_CNT 3
+#define BSP_UART_BITBANG_TX MCU_GPIO_PORTB(3)
+#define BSP_UART_BITBANG_RX MCU_GPIO_PORTA(15)
 
 /* Arduino pins */
 #define ARDUINO_PIN_D0      MCU_GPIO_PORTD(9)

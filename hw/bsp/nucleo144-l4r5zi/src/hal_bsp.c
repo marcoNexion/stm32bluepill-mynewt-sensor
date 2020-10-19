@@ -29,6 +29,20 @@
 #include <uart_hal/uart_hal.h>
 #endif
 
+/* UartBitbang is a software uart on a gpio - initialised by the bitbang package in sysinit */
+#if MYNEWT_VAL(UART_BITBANG)
+#include <uart/uart.h>
+#include <uart_bitbang/uart_bitbang.h>
+
+static struct uart_dev hal_uartbitbang;
+static const struct uart_bitbang_conf uartbitbang_cfg = {
+    .ubc_rxpin = BSP_UART_BITBANG_RX,
+    .ubc_txpin = BSP_UART_BITBANG_TX,
+    .ubc_cputimer_freq = MYNEWT_VAL(OS_CPUTIME_FREQ),
+};
+#endif
+
+
 #if MYNEWT_VAL(UART_1)
 static struct uart_dev hal_uart_dbg;
 
@@ -293,6 +307,14 @@ hal_bsp_init(void)
 #if MYNEWT_VAL(UART_2)
     rc = os_dev_create((struct os_dev *) &hal_uart_gps_cfg, "uart2",
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_gps_cfg);
+    assert(rc == 0);
+#endif
+
+/* Initialised by bitbang package in sysinit */
+#if MYNEWT_VAL(UART_BITBANG)
+    assert(BSP_UART_BITBANG_TX!=-1);        // mst define at least tx pin
+    rc = os_dev_create((struct os_dev *) &hal_uartbitbang, "uart3",
+      OS_DEV_INIT_PRIMARY, 0, uart_bitbang_init, (void *)&uartbitbang_cfg);
     assert(rc == 0);
 #endif
 

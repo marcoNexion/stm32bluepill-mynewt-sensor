@@ -47,3 +47,5 @@ pkg.deps.UART_1:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 pkg.deps.UART_2:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+pkg.deps.UART_BITBANG:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_bitbang"
