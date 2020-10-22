@@ -30,3 +30,6 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/sensor"
+
+pkg.init:
+    init_custom_coap: 660  # Call init_custom_coap() to initialise the Sensor CoAP module during startup

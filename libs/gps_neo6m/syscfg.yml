@@ -25,9 +25,15 @@ syscfg.defs:
     GPS_UBLOX_DEVICE:
         description: 'Use gps to get my position and UTC time'
         value:       '"ublox_neo6m"'
-    GPS_NEO6M_UART:
-        description: 'UART port for accessing GPS module. 0 means UART2, 1 means UART1, 2 means UART3'
-        value:       2
+#    GPS_NEO6M_UART:
+#        description: 'UART port for accessing GPS module. 3: bitbang, 2: hw'
+#        value:       2
+    GPS_NEO6M_UART_NAME:
+        description: 'UART port for accessing GPS module. UART3: bitbang, UART2: hw'
+        value:       '"uart2"'
+    GPS_NEO6M_UART_BAUD:
+        description: 'UART port baudrate'
+        value:       9600
     GPS_NEO6M_ENABLE_PIN:
         description: 'GPIO Pin that enables and disables the GPS module. Set to -1 for no pin.'
         value:       -1

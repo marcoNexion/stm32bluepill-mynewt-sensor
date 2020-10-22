@@ -33,13 +33,15 @@
 #define DEVICE_CFG_FUNC    gps_neo6m_config  //  Device config function
 #define DEVICE_INIT        gps_neo6m_init    //  Device init function
 #define DEVICE_CREATE      gps_neo6m_create  //  Device create function
-#define DEVICE_ITF         uart_0_itf_gps_neo6m   //  Device interface
+#define DEVICE_ITF         uart_itf_gps_neo6m   //  Device interface
 
 static struct DEVICE_DEV DEVICE_INSTANCE;  //  Global instance of the device
 
 static struct sensor_itf DEVICE_ITF = {    //  Global sensor interface for the device
     .si_type = SENSOR_ITF_UART,            //  Sensor interface type: UART
-    .si_num  = MYNEWT_VAL(GPS_NEO6M_UART),  //  Sensor interface number: 0 for UART1, 1 for UART2
+
+//when BUS_DRIVER_PRESENT .si_num is replaced by device driver
+//    .si_num  = MYNEWT_VAL(GPS_NEO6M_UART),  //  Sensor interface number: 0 for UART1, 1 for UART2
 };
 
 ///////////////////////////////////////////////////////////////////////////////

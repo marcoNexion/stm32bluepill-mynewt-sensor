@@ -31,10 +31,14 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/sensor"
+    - "@apache-mynewt-core/hw/drivers/uart"
     - "@apache-mynewt-core/libc/baselibc"  #  Baselibc, the tiny version of standard C library
     - "libs/tiny_gps_plus"                 #  TinyGPS++ library for parsing NMEA streams
     - "libs/buffered_serial"               #  Buffered Serial Port
     - "libs/custom_sensor"                 #  Custom sensor data type for Geolocation
+
+#    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+#    - "@apache-mynewt-core/hw/drivers/uart/uart_bitbang"
 
 # Initialisation functions to be called by sysinit() during startup.
 # Mynewt consolidates the initialisation functions into sysinit()

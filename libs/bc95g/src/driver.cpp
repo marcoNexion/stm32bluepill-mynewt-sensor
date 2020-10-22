@@ -169,16 +169,18 @@ static void internal_init(char *txbuf, uint32_t txbuf_size, char *rxbuf, uint32_
     parser.init(serial, parserbuf, parserbuf_size);
     packets = 0;
     packets_end = &packets;
-    serial.baud(9600);  //  TODO: Increase the bitrate
     parser.debugOn(debug);
 }
 
+
+
 /// Configure the UART port
-static void internal_configure(int uart) {
-    serial.configure(uart);
+static void internal_configure(const char *uart_devname, uint32_t baudrate) {
+    serial.configure(uart_devname);
+    serial.baud(baudrate);
 }
 
-/// Attach to the UART port
+/// Attach callback to the UART port
 static void internal_attach(void (*func)(void *), void *arg) {
     serial.attach(func, arg);
 }
@@ -187,6 +189,7 @@ static void internal_attach(void (*func)(void *), void *arg) {
 static void internal_timeout(uint32_t timeout_ms) {
     parser.setTimeout(timeout_ms);
 }
+
 
 /////////////////////////////////////////////////////////
 //  Send AT Commands
@@ -350,8 +353,9 @@ static int bc95g_open(struct os_dev *dev0, uint32_t timeout, void *arg) {
         bc95g_parser_buffer, BC95G_PARSER_BUFFER_SIZE,
         false
     );
-    internal_configure(cfg->uart);         //  Configure the UART port.  0 means UART2, 1 means UART1.
-    internal_attach(&bc95g_event, dev);    //  Set the callback for BC95G events.
+
+    internal_configure(MYNEWT_VAL(BC95G_UART_NAME), MYNEWT_VAL(BC95G_UART_BAUD)); //  Configure the UART port.
+    internal_attach(&bc95g_event, dev); //  Set the callback for BC95G events.
     return 0;
 }
 
@@ -385,16 +389,17 @@ err:
 int bc95g_default_cfg(struct bc95g_cfg *cfg) {
     //  Copy the default BC95G config into cfg.  Returns 0.
     memset(cfg, 0, sizeof(struct bc95g_cfg));  //  Zero the entire object.
-    cfg->uart = MYNEWT_VAL(BC95G_UART);  //  0 for UART2, 1 for UART1.
+    
+    //TODO : set BC95G_UART_NAME from here
+    //cfg->uart = MYNEWT_VAL(BC95G_UART);
     return 0;
 }
 
 int bc95g_config(struct bc95g *drv, struct bc95g_cfg *cfg) {
     //  Copy the BC95G driver configuration from cfg into drv.  Return 0 if successful.
-    struct bc95g_cfg *drv_cfg = &drv->cfg;
-    drv_cfg->uart = cfg->uart;    
-    assert(drv_cfg->uart == MYNEWT_VAL(BC95G_UART));
-    internal_configure(drv_cfg->uart);  //  Configure the UART port.  0 means UART2, 1 means UART1.
+    //TODO : provide UART_NAME from caller
+    assert( os_dev_lookup(MYNEWT_VAL(BC95G_UART_NAME)) != NULL );
+    
     return 0;
 }
 

@@ -39,7 +39,7 @@ static struct DEVICE_DEV DEVICE_INSTANCE;  //  Global instance of the device
 
 static struct sensor_itf DEVICE_ITF = {    //  Global sensor interface for the device
     .si_type = SENSOR_ITF_UART,            //  Sensor interface type: UART
-    .si_num  = MYNEWT_VAL(BC95G_UART),     //  Sensor interface number: 0 for UART1, 1 for UART2
+//    .si_num  = MYNEWT_VAL(BC95G_UART),     //  Sensor interface number: 0 for UART1, 1 for UART2
 };
 
 ///////////////////////////////////////////////////////////////////////////////

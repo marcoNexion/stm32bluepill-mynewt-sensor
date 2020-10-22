@@ -22,6 +22,7 @@
 #define __GPS_NEO6M_DRIVER_H__
 
 #include <os/mynewt.h>
+#include <uart/uart.h>
 #include <sensor/sensor.h>
 
 #ifdef __cplusplus
@@ -39,7 +40,7 @@ extern "C" {  //  Expose the types and functions below to C functions.
 //  GPS Configuration
 struct gps_neo6m_cfg {
     sensor_type_t bc_s_mask;   //  Sensor data types that will be returned, i.e. Geolocation only
-    int uart;                  //  UART port: 0 for UART2, 1 for UART0, 2 for UART3
+    struct uart_dev uart;                  //  UART port: 0 for UART2, 1 for UART0, 2 for UART3
 };
 
 //  GPS Device Instance for Mynewt

@@ -22,6 +22,7 @@
 //#include <sensor_network/sensor_network.h>
 #include <bsp/bsp.h>
 #include <hal/hal_gpio.h>
+#include <uart/uart.h>
 #include <tiny_gps_plus/tiny_gps_plus.h>
 #include <buffered_serial/buffered_serial.h>
 #include "gps_neo6m/gps_neo6m.h"
@@ -92,12 +93,12 @@ static const char *COMMANDS[] = {
 static void internal_init(char *txbuf, uint32_t txbuf_size, char *rxbuf, uint32_t rxbuf_size, 
     char *parserbuf, uint32_t parserbuf_size, bool debug) {
     serial.init(txbuf, txbuf_size, rxbuf, rxbuf_size);
-    serial.baud(9600);
 }
 
 /// Configure the UART port
-static void internal_configure(int uart) {
-    serial.configure(uart);
+static void internal_configure(const char *uart_devname, uint32_t baudrate) {
+    serial.configure(uart_devname);
+    serial.baud(baudrate);
 }
 
 /// Attach callback to the UART port
@@ -216,7 +217,7 @@ static int gps_neo6m_open(struct os_dev *dev0, uint32_t timeout, void *arg) {
     console_printf("[\n");  ////
     assert(dev0);
     struct gps_neo6m *dev = (struct gps_neo6m *) dev0;
-    struct gps_neo6m_cfg *cfg = &dev->cfg;
+    //struct gps_neo6m_cfg *cfg = &dev->cfg;
 
     //  Set the buffers for the C++ instance. We pass in static buffers to avoid dynamic memory allocation (new, delete).
     internal_init(
@@ -225,8 +226,12 @@ static int gps_neo6m_open(struct os_dev *dev0, uint32_t timeout, void *arg) {
         gps_neo6m_parser_buffer, GPS_NEO6M_PARSER_BUFFER_SIZE,
         false
     );
-    internal_configure(cfg->uart);         //  Configure the UART port.  0 means UART2, 1 means UART1.
-    internal_attach(&rx_event, dev);    //  Set the callback for GPS_NEO6M events.
+
+    //configure apps call back and driver's callback
+    //todo map DEV_NAME with MYNEWT_VAL for "uart3" 
+    internal_configure(MYNEWT_VAL(GPS_NEO6M_UART_NAME), MYNEWT_VAL(GPS_NEO6M_UART_BAUD));
+    internal_attach(&rx_event, dev);
+       
     return 0;
 }
 
@@ -259,7 +264,7 @@ err:
 int gps_neo6m_default_cfg(struct gps_neo6m_cfg *cfg) {
     //  Copy the default GPS_NEO6M config into cfg.  Returns 0.
     memset(cfg, 0, sizeof(struct gps_neo6m_cfg));  //  Zero the entire object.
-    cfg->uart = MYNEWT_VAL(GPS_NEO6M_UART);  //  0 for UART2, 1 for UART1.
+    //TODO cfg->uart = MYNEWT_VAL(GPS_NEO6M_UART);  //  0 for UART2, 1 for UART1.
 
     //  Copy the default sensor config.
     int rc = gps_neo6m_sensor_default_cfg(cfg);  assert(rc == 0);
@@ -272,8 +277,10 @@ int gps_neo6m_config(struct gps_neo6m *drv, struct gps_neo6m_cfg *cfg) {
 
     //  Configure the UART port.  0 means UART2, 1 means UART1.
     drv_cfg->uart = cfg->uart;    
-    assert(drv_cfg->uart == MYNEWT_VAL(GPS_NEO6M_UART));
-    internal_configure(drv_cfg->uart);
+    // TODO assert(drv_cfg->uart == MYNEWT_VAL(GPS_NEO6M_UART));
+    //internal_configure("uart3", MYNEWT_VAL(GPS_NEO6M_UART_BAUD));
+
+    assert( os_dev_lookup(MYNEWT_VAL(GPS_NEO6M_UART_NAME)) != NULL );
 
     //  Configure the GPS sensor.
     int rc = gps_neo6m_sensor_config(drv, cfg);  assert(rc == 0);

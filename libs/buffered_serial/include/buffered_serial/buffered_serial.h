@@ -25,6 +25,7 @@
 #define BUFFEREDSERIAL_H
 
 #include <os/os.h>  //  For os_sem.
+#include <uart/uart.h>
 #include "ring_buffer.h"
 #undef putc      //  Avoid conflict with putc() below.
 
@@ -84,6 +85,13 @@ private:
     os_sem        _rx_sem;     //  Semaphore that is signalled for every byte received.
     void (*_cbs[2])(void *);   //  RX, TX callbacks, indexed by RxIrq, TxIrq.
     void *_cbs_arg[2];         //  RX, TX callback arguments, indexed by RxIrq, TxIrq.
+
+    /*
+    hal_uart_start_tx   //  Start transmitting UART data in the buffer.  txIrq will retrieve the data from the buffer.
+    hal_uart_start_rx   //  Start receiving UART data.
+    hal_uart_init_cbs   //  Define the UART callbacks.
+    hal_uart_config     //  Set UART parameters.
+    */
     
 public:
     /** Create a BufferedSerial port
@@ -97,9 +105,9 @@ public:
     void init(char *txbuf, uint32_t txbuf_size, char *rxbuf, uint32_t rxbuf_size, const char* name = NULL);
     
     /** Configure the BufferedSerial port
-     *  @param uart UART port number. 0 means UART2
+     *  @param uart UART dev name
      */
-    void configure(int uart);
+    void configure(const char *uart_devname);
 
     /** Set the baud rate
      *  @param baud baud rate e.g. 115200
@@ -152,8 +160,10 @@ public:
     int rxIrq(uint8_t byte);
     int txIrq(void);
     void prime(void);
-    int _uart;
+    //int _uart;
     uint32_t _baud;
+    const char *_uart_devname;
+    struct uart_dev *_uartdev;
 };
 
 #endif
