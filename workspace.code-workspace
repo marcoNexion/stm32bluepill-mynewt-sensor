@@ -80,7 +80,12 @@
 			"adxl362reg.h": "c",
 			"lowpowermgr.h": "c",
 			"chrono": "c",
-			"random": "c"
+			"random": "c",
+			"array": "cpp",
+			"functional": "cpp",
+			"istream": "cpp",
+			"ostream": "cpp",
+			"ratio": "cpp"
 		},
 		"rust.racer_completion": false
 	}

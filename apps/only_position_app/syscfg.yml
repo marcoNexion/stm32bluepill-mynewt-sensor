@@ -39,6 +39,11 @@ syscfg.defs:
 
 syscfg.vals:
 
+    SENSOR_NETWORK:         0  # Enable Sensor Network library
+    SENSOR_COAP:            0  # Send sensor data to CoAP server
+    COAP_JSON_ENCODING:     0  # Use JSON to encode CoAP payload for forwarding to thethings.io
+    RAW_TEMP:               0  # Use raw temperature (integer) instead of floating-point temperature values, to reduce ROM size
+
     ###########################################################################
     # GPS Settings
     GPS_DEVICE:         '"gps_neo6m"'
