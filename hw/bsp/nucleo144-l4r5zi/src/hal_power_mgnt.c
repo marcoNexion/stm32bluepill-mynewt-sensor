@@ -27,6 +27,7 @@
 #include "stm32l4xx_hal_pwr.h"
 #include "bsp/hal_power_mgnt.h"
 #include <mcu/cmsis_nvic.h>
+
 #define EXT_GPIO_FOR_SLEEP_TESTING
 
 #ifdef EXT_GPIO_FOR_SLEEP_TESTING
@@ -41,7 +42,7 @@ extern void IRQset_disable_all(void);
 //extern void SystemClock_StopPLL(void);
 
 /* maximum time that can be requested from the wakeup timer (and still get the elapsed rtc time correctly) */
-#define MAX_WAKEUP_TIMER_MS (65530) //to avoid 16-bit timer overflow
+#define MAX_WAKEUP_TIMER_MS MYNEWT_VAL(OS_IDLE_TICKLESS_MS_MAX) //to avoid 16-bit timer overflow
 
 #if MYNEWT_VAL(OS_TICKLESS)
 #include "hal_lptimer.h"
@@ -137,30 +138,37 @@ stm32_tickless_start(uint32_t timeMS)
     if (timeMS > 0) {
         hal_lptimer_start(timeMS);
     }
+
     /* Suspend SysTick Interrupt */
-    NVIC_DisableIRQ(SysTick_IRQn);
-    /* Stop SYSTICK */
-    CLEAR_BIT(SysTick->CTRL,SysTick_CTRL_TICKINT_Msk);
+    HAL_SuspendTick();
 }
 
 static void 
 stm32_tickless_stop(uint32_t timeMS)
 {
     /* add asleep duration to tick counter */
-    uint32_t asleep_ms = (uint32_t)hal_lptimer_get_elapsed_time();
-    asleep_ms += (asleep_ms / 10); //add more
+    uint32_t asleep_ms = (uint32_t)hal_lptimer_get_elapsed_time() - 1;
+
     int asleep_ticks = os_time_ms_to_ticks32(asleep_ms);
 
-    assert(asleep_ticks >= 0);
-    os_time_advance(asleep_ticks);
-
-    /* reenable SysTick Interrupt */
-    NVIC_EnableIRQ(SysTick_IRQn);
-    /* reenable SysTick */
-    SET_BIT(SysTick->CTRL,SysTick_CTRL_TICKINT_Msk);
+    assert((asleep_ticks >= 0) && (asleep_ticks <= timeMS));
+    
+    /* Since ISR is actually suspended : clean pending IRQs */
+    /* It's mandatory due to PendSV routine awaiting for  */
+    /* no exception is active */
+    hal_lptimer_clear_pending_irq();
 
     /* disable LPtimer wakeup */
     hal_lptimer_stop();
+
+    /* Now update Systick counter and scheduling        */
+    /* PendSV interrupt pending bit will be set         */
+    /* to force context switch         */
+    os_time_advance(asleep_ticks);
+
+    /* reenable SysTick Interrupt */
+    HAL_ResumeTick();
+
 }
 #endif //#if MYNEWT_VAL(OS_TICKLESS)
 
@@ -179,13 +187,12 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
 
     /* begin tickless */
 #if MYNEWT_VAL(OS_TICKLESS)
-    //NVIC_DisableIRQ(TIM1_UP_TIM16_IRQn);
     stm32_tickless_start(durationMS);
 #endif
 
 #ifdef EXT_GPIO_FOR_SLEEP_TESTING
     hal_gpio_write(EXT_OUTPUT, 0);
-    //IRQset_get_status();
+//    IRQset_get_status();
 #endif
 
     switch (power_mode) {
@@ -194,8 +201,6 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
         case HAL_BSP_POWER_DEEP_SLEEP: {
             /*Disables the Power Voltage Detector(PVD) */                
             HAL_PWR_DisablePVD( );
-            /* System clock down to MSI */
-            //SystemClock_StopPLL();
             /* Enters StandBy mode */
             HAL_PWR_EnterSTANDBYMode();
             /* If exit standby mode then the RAM has been lost. Reboot cleanly. */
@@ -204,18 +209,8 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
         }
         case HAL_BSP_POWER_SLEEP: {
             /*Disables the Power Voltage Detector(PVD) */                 
-            HAL_PWR_DisablePVD( );
-    #if 0
-            /* System clock down to MSI */
-            SystemClock_StopPLL();
-            /* Enters Stop mode (with LP regulator instead of PWR_MAINREGULATOR_ON) */
+            //HAL_PWR_DisablePVD( );
             HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
-            /* STOP mode has halted the clocks and will be running on MSI - restart correctly */
-            SystemClock_RestartPLL();
-            /* Reenable PVD. Required? */
-            HAL_PWR_EnablePVD( );
-    #endif
-            HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
             break;
         }
         case HAL_BSP_POWER_WFI: {
@@ -231,13 +226,14 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
     }
 
 #ifdef EXT_GPIO_FOR_SLEEP_TESTING
-    //IRQset_get_status();
     hal_gpio_write(EXT_OUTPUT, 1);
+//    IRQset_get_status();
 #endif
     
 #if MYNEWT_VAL(OS_TICKLESS)
     /* exit tickless low power mode */
     stm32_tickless_stop(durationMS);
-    //NVIC_EnableIRQ(TIM1_UP_TIM16_IRQn);
 #endif
+
+
 }

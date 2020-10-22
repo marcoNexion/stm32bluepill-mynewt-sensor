@@ -35,6 +35,7 @@ extern "C" {
 #define bssnz_t         sec_bss_nz_core
 
 extern uint8_t _ram_start;
+extern void _sbrkInit(char *base, char *limit);
 
 #define RAM_SIZE        (96 * 1024)
 
@@ -83,6 +84,10 @@ extern uint8_t _ram_start;
 #define ARDUINO_PIN_SCK     ARDUINO_PIN_D13
 #define ARDUINO_PIN_MOSI    ARDUINO_PIN_D11
 #define ARDUINO_PIN_MISO    ARDUINO_PIN_D12
+
+
+void startup_drivers(void);
+
 
 #ifdef __cplusplus
 }

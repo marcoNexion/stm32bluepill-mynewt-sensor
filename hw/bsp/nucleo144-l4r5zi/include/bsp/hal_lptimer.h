@@ -69,6 +69,17 @@ void hal_lptimer_start(uint16_t timeMs);
 void hal_lptimer_stop(void);
 
 
+/**
+ * Clear only LPTIM_IT_CMPM bit 
+ * specificaly to this LP timer 
+ * operating mode
+ *
+ * @param timeMs : none
+ *
+ * @return none
+ * 
+ * **/
+void hal_lptimer_clear_pending_irq(void);
 
 /**
  * Get the actual counter value

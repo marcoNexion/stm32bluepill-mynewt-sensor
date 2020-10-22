@@ -14,12 +14,7 @@
 static LPTIM_HandleTypeDef hlptimer;
 
 void LPTIM_IRQ_Handler(void){
-#ifdef HAL_IRQ_LPTIMER_HANDLER
 	HAL_LPTIM_IRQHandler(&hlptimer);
-#endif
-#ifdef EXT_GPIO_FOR_IRQ_TESTING
-	hal_gpio_toggle(EXT_OUTPUT);
-#endif
 }
 
 /*HAL_LPTIM_MspInit is called by HAL into HAL_LPTIM_Init() */
@@ -28,19 +23,18 @@ void HAL_LPTIM_MspInit(LPTIM_HandleTypeDef *hlptim){
     /*Stop the timers at debugger.*/
 	//__HAL_DBGMCU_FREEZE_LPTIM1();
 	/*LPTIM used as tickless may have the same priority than Systick */
-	NVIC_SetPriority(LPTIM1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0)); //
+	NVIC_SetPriority(LPTIM1_IRQn, (1 << __NVIC_PRIO_BITS) - 1);
 	/* Note : IRQ handler is not configured into hal. Do it here.*/
 	NVIC_SetVector(LPTIM1_IRQn, (uint32_t)LPTIM_IRQ_Handler);
 	/*Enable IRQ now forever */
 	NVIC_EnableIRQ(LPTIM1_IRQn);
 }
 
-#ifdef HAL_IRQ_LPTIMER_HANDLER
 void HAL_LPTIM_CompareMatchCallback(LPTIM_HandleTypeDef *hlptim){
-	
-}
+#ifdef EXT_GPIO_FOR_IRQ_TESTING
+	hal_gpio_toggle(EXT_OUTPUT);
 #endif
-
+}
 
 
 void hal_lptimer_init(void)
@@ -84,6 +78,14 @@ void hal_lptimer_stop(void)
     {
         assert(0);
     }
+}
+
+void hal_lptimer_clear_pending_irq(void)
+{
+    //__HAL_LPTIM_CLEAR_FLAG(&hlptimer, LPTIM_FLAG_CMPM);
+    //call IRQ handler to execute propers handler according to
+    //related IRQ
+    LPTIM_IRQ_Handler();
 }
 
 uint16_t hal_lptimer_get_elapsed_time(void){

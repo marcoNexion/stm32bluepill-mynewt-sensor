@@ -22,6 +22,10 @@ syscfg.defs:
         description: 'Total flash size in KB.'
         value: 1024
 
+    OS_CPUTIME_TIMER_REF:
+        description: 'Mynewt OS_CPUTIME_TIMER'
+        value:  0
+
     UART_0:
         description: 'UART used to communicate with BC95 NbIoT Modem'
         value:  1
@@ -36,11 +40,11 @@ syscfg.defs:
 
     UART_BITBANG:
         description: 'UartBitbang is a software uart on a gpio'
-        value:  1
+        value:  0
 
     TIMER_0:
-        description: 'Timer 0'
-        value:  1
+        description: 'Timer 0 used by Mynewt for OS_CPUTIME_TIMER'
+        value:  0
 
     TIMER_1:
         description: 'Timer 1'
@@ -74,7 +78,13 @@ syscfg.vals:
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
     BOOTUTIL_MAX_IMG_SECTORS: 256
-    
+
+    OS_IDLE_TICKLESS_MS_MIN: 100
+    OS_IDLE_TICKLESS_MS_MAX: 65530  # Tickless timer is a 16bit timer
+
+    SANITY_INTERVAL:          15000
+    WATCHDOG_INTERVAL :       20000
+
     BSP_POWER_SETUP: 0
     OS_TICKLESS: 1
     MAX_LPCBFNS: 6
@@ -83,3 +93,11 @@ syscfg.vals:
 
 syscfg.vals.SPI_1:        
     SPI_0_MASTER: 1
+
+syscfg.vals.!OS_CPUTIME_TIMER_REF:
+    OS_CPUTIME_TIMER: -1
+    TIMER_0: 0
+syscfg.vals.OS_CPUTIME_TIMER_REF:
+    OS_CPUTIME_TIMER: 0
+    TIMER_0: 1
+

@@ -19,6 +19,10 @@
 #include "mcu/stm32_hal.h"
 #include "hal/hal_i2c.h"
 #include "hal/hal_spi.h"
+#include "hal/hal_gpio.h"
+
+extern uint32_t __HeapBase;
+extern uint32_t __HeapLimit;
 
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
 #include <hal/hal_spi.h>
@@ -272,8 +276,9 @@ void hal_system_clock_start(void){
      */
     HAL_RCCEx_EnableMSIPLLMode();
 
+    HAL_RCCEx_WakeUpStopCLKConfig(RCC_STOP_WAKEUPCLOCK_MSI);
 
-    HAL_RCC_MCOConfig( RCC_MCO1, RCC_MCO1SOURCE_LSI, RCC_MCODIV_1);
+    HAL_RCC_MCOConfig( RCC_MCO1, RCC_MCO1SOURCE_NOCLOCK, RCC_MCODIV_8);
 
 
 }
@@ -288,6 +293,9 @@ hal_bsp_init(void)
     int rc;
 
     (void)rc;
+
+    //TODO : do heap limt intialization into startup_XXX.s
+    _sbrkInit((char *)&__HeapBase, (char *)&__HeapLimit);
 
     /* Make sure system clocks have started. */
     hal_system_clock_start();
@@ -308,18 +316,25 @@ hal_bsp_init(void)
     rc = os_dev_create((struct os_dev *) &hal_uart_gps_cfg, "uart2",
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_gps_cfg);
     assert(rc == 0);
+#else
+    hal_gpio_init_in(MCU_GPIO_PORTD(8), HAL_GPIO_PULL_NONE);
+    hal_gpio_init_in(MCU_GPIO_PORTD(9), HAL_GPIO_PULL_NONE);
 #endif
 
-/* Initialised by bitbang package in sysinit */
+    /* Initialised by bitbang package in sysinit */
 #if MYNEWT_VAL(UART_BITBANG)
-    assert(BSP_UART_BITBANG_TX!=-1);        // mst define at least tx pin
     rc = os_dev_create((struct os_dev *) &hal_uartbitbang, "uart3",
       OS_DEV_INIT_PRIMARY, 0, uart_bitbang_init, (void *)&uartbitbang_cfg);
     assert(rc == 0);
+#else
+    hal_gpio_init_in(BSP_UART_BITBANG_RX, HAL_GPIO_PULL_NONE);
+    hal_gpio_init_in(BSP_UART_BITBANG_TX, HAL_GPIO_PULL_NONE);
 #endif
 
+
+
 #if MYNEWT_VAL(TIMER_0)
-    rc = hal_timer_init(0, TIM1);
+    rc = hal_timer_init(0, TIM2);
     assert(rc == 0);
 #endif
 
@@ -333,5 +348,5 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
-    /* Initialize additional BSP peripherals here. */
 }
+
