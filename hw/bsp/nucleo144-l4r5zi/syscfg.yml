@@ -66,11 +66,7 @@ syscfg.defs:
         description: 'tickless implementation'
         value : 0
 
-    MAX_LPCBFNS:
-        description: 'Maximum callback functions for lowpower modes subscribtors'
-        value : 1
-
-    
+   
 
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
@@ -87,7 +83,6 @@ syscfg.vals:
 
     BSP_POWER_SETUP: 0
     OS_TICKLESS: 1
-    MAX_LPCBFNS: 6
     #CONSOLE_UART_DEV: '"uart1"'
     #CONSOLE_UART_BAUD: 115200
 

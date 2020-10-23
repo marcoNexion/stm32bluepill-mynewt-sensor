@@ -37,6 +37,8 @@ pkg.req_apis:
 
 pkg.deps.ADXL362_CLI:
     - "@apache-mynewt-core/util/parse"
+pkg.deps.ADXL_362_LPMODE:
+    - "libs/lowpower_mgnt"
 
 pkg.init:
     # bc95g should be initialised after rf24l01 (Stage 640)

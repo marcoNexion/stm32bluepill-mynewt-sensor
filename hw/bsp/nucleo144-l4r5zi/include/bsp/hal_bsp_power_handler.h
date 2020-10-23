@@ -20,16 +20,24 @@
 #define H_HAL_BSP_POWER_HANDLER_H
 
 #include <inttypes.h>
-#include "bsp/lowpowermgr.h"
+
+#if MYNEWT_VAL(BSP_POWER_SETUP)
+#include "lowpower_mgnt/lowpower_mgnt.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#if MYNEWT_VAL(BSP_POWER_SETUP)
+void hal_bsp_power_hooks(LP_HOOK_t getMode, LP_HOOK_t enter, LP_HOOK_t exit);
+#else
+void hal_bsp_power_hooks(void* getMode, void* enter, void* exit);
+#endif
+
 // Halt board and MCU in lowest power mode possible. Never returns
 void hal_bsp_halt();
 
-void hal_bsp_power_hooks(LP_HOOK_t getMode, LP_HOOK_t enter, LP_HOOK_t exit);
 /** functions called from OS (os.c and hal_os_tick.c) */
 int hal_bsp_power_handler_get_mode(os_time_t ticks);
 void hal_bsp_power_handler_sleep_enter(int nextMode);

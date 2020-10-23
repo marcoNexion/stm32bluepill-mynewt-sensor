@@ -17,18 +17,27 @@
 #include "os/os.h"
 #include <assert.h>
 #include <hal/hal_bsp.h>
-#include "bsp/bsp.h"
-#include "bsp/lowpowermgr.h"
+#include "lowpower_mgnt/lowpower_mgnt.h"
 #include "bsp/hal_power_mgnt.h"
 #include "bsp/hal_bsp_power_handler.h"
 
-#define MAX_LPCBFNS MYNEWT_VAL(MAX_LPCBFNS)
+#define MAX_LPCBFNS             MYNEWT_VAL(MAX_LPCBFNS)
+
+/* wrapped definitions for different power mode     */
+/* on this specific bsp                             */
+#define HAL_BSP_LP_RUN          HAL_BSP_POWER_ON
+#define HAL_BSP_LP_OFF          HAL_BSP_POWER_OFF
+#define HAL_BSP_LP_DEEPSLEEP    HAL_BSP_POWER_SLEEP
+#define HAL_BSP_LP_SLEEP        HAL_BSP_POWER_WFI
+#define HAL_BSP_LP_DOZE         HAL_BSP_POWER_WFI
+
 
 // Registered callbacks fns
 static struct lp_ctx {
     struct {
         LP_MODE_t desiredMode;  // Current sleep mode required
         LP_CBFN_t cb;           // callback to be informed of changes
+        void *cb_arg;
     } lpUsers[MAX_LPCBFNS];
     uint8_t deviceCnt;
     LP_MODE_t sleepMode;
@@ -42,15 +51,18 @@ static LP_MODE_t calcNextSleepMode();
 void LPMgr_init(void) {
     // This is a generic low power manager. So it delegates this stuff to BSP/MCU code...
 #if MYNEWT_VAL(BSP_POWER_SETUP)
+    assert((MAX_LPCBFNS > 0) && (MAX_LPCBFNS < LP_UNITIALIZED_ID));
+
     hal_bsp_power_hooks(LPMgr_getMode, LPMgr_entersleep, LPMgr_exitsleep);
 #endif
 }
 
 // Register to be told when we change mode
-LP_ID_t LPMgr_register(LP_CBFN_t cb) {
+LP_ID_t LPMgr_register(LP_CBFN_t cb, void *cb_arg) {
     assert(_ctx.deviceCnt < MAX_LPCBFNS);
     uint8_t id = _ctx.deviceCnt;
     _ctx.lpUsers[_ctx.deviceCnt].cb=cb;     // May be NULL if user only changes the desired LP mode...
+    _ctx.lpUsers[_ctx.deviceCnt].cb_arg=cb_arg;                 //callback may carry arg
     _ctx.lpUsers[_ctx.deviceCnt].desiredMode=LP_DEEPSLEEP;      // start by assuming everyone is ok with deep sleep
     _ctx.deviceCnt++;
     return id;
@@ -58,16 +70,30 @@ LP_ID_t LPMgr_register(LP_CBFN_t cb) {
 // THe level of sleeping when someone (the OS) asks to enter 'low power mode'
 void LPMgr_setLPMode(LP_ID_t id, LP_MODE_t m) {
     assert(id>=0 && id < MAX_LPCBFNS);
+
+    /* in case of re-activating, set new mode               */
+    /* and generates callback to wake it up immediatley     */
 //    LP_MODE_t prevmode = _ctx.lpUsers[id].desiredMode;
+/*
+    if((m <= LP_RUN) && (_ctx.lpUsers[id].desiredMode > LP_RUN))
+    {
+        if (_ctx.lpUsers[id].cb!=NULL) {
+            (*_ctx.lpUsers[id].cb)(_ctx.sleepMode, LP_RUN);
+        }
+    }
+*/
     // Set this guy's desired mode
     _ctx.lpUsers[id].desiredMode = m;
     _ctx.sleepMode = calcNextSleepMode();
+
     // new mode taken into account next time we sleep as BSP should call LPMgr_getMode() to get a HAL related sleep level
 /* for debug only and be careful
     if (prevmode != m) {
         log_warn("LP::%d:%d", m, _ctx.sleepMode);
     }
 */
+
+
 }
 LP_MODE_t LPMgr_getNextLPMode() {
     _ctx.sleepMode = calcNextSleepMode();
@@ -85,14 +111,14 @@ LP_MODE_t LPMgr_getNextLPMode() {
  */
 int LPMgr_getMode() {
     if (_ctx.sleepMode == LP_OFF) {
-        return HAL_BSP_POWER_OFF;       // Restart on RTC
+        return HAL_BSP_LP_OFF;       // Restart on RTC
     } else if (_ctx.sleepMode == LP_DEEPSLEEP) {
-        return HAL_BSP_POWER_SLEEP;     // NOTE : we don't use HAL_BSP_POWER_DEEP_SLEEP as this implies RAM loss
+        return HAL_BSP_LP_DEEPSLEEP;     // NOTE : we don't use HAL_BSP_POWER_DEEP_SLEEP as this implies RAM loss
     } else if (_ctx.sleepMode == LP_SLEEP) {
-        return HAL_BSP_POWER_WFI;       // Only CPU pause bus still run
+        return HAL_BSP_LP_SLEEP;       // Only CPU pause bus still run
     } else {
         // LP_DOZE normally
-        return HAL_BSP_POWER_WFI;       // Only CPU pause
+        return HAL_BSP_LP_DOZE;       // Only CPU pause
     }
 }
 /** signal sleep entry (outside critical region). Returns anticipated sleep level.*/
@@ -100,7 +126,7 @@ int LPMgr_entersleep() {
     // tell all registered CBs we sleep (and at what level)
     for(int i=0;i<_ctx.deviceCnt;i++) {
         if (_ctx.lpUsers[i].cb!=NULL) {
-            (*_ctx.lpUsers[i].cb)(LP_RUN, _ctx.sleepMode);
+            (*_ctx.lpUsers[i].cb)(LP_RUN, _ctx.sleepMode, _ctx.lpUsers[i].cb_arg);
         }
     }
     return LPMgr_getMode();
@@ -110,10 +136,10 @@ int LPMgr_exitsleep() {
     // Tell everyone who cares
     for(int i=0;i<_ctx.deviceCnt;i++) {
         if (_ctx.lpUsers[i].cb!=NULL) {
-            (*_ctx.lpUsers[i].cb)(_ctx.sleepMode, LP_RUN);
+            (*_ctx.lpUsers[i].cb)(_ctx.sleepMode, LP_RUN, _ctx.lpUsers[i].cb_arg);
         }
     }
-    return HAL_BSP_POWER_ON;
+    return HAL_BSP_LP_RUN;
 }
 
 // Internals

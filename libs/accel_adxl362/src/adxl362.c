@@ -35,6 +35,11 @@
 #include "stats/stats.h"
 #include <syscfg/syscfg.h>
 
+#if MYNEWT_VAL(ADXL_362_LPMODE)
+#include "lowpower_mgnt/lowpower_mgnt.h"
+LP_ID_t LPMgr_id = LP_UNITIALIZED_ID;
+#endif
+
 
 static struct hal_spi_settings spi_adxl362_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
@@ -43,8 +48,7 @@ static struct hal_spi_settings spi_adxl362_settings = {
     .word_size  = HAL_SPI_WORD_SIZE_8BIT,
 };
 
-enum adxl362_accel_range selectedRange = 0;
-uint16_t sampleRate=100;
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Logging Functions: Put common strings here to reduce space.
@@ -52,6 +56,32 @@ uint16_t sampleRate=100;
 
 #define ADXL362_NOTIFY_MASK  0x01
 #define ADXL362_READ_MASK    0x02
+
+static int init_spi(struct adxl362 *adxl, struct hal_spi_settings *spi_settings);
+static int deinit_spi(struct adxl362 *adxl);
+
+#if MYNEWT_VAL(ADXL_362_LPMODE)
+// Callback from low power manager about change of mode
+//deal with : LP_RUN, LP_DOZE, LP_SLEEP, LP_DEEPSLEEP, LP_OFF
+static void adxl362_lp_change(  LP_MODE_t prevmode, 
+                                LP_MODE_t newmode,
+                                void * arg) {
+
+    struct adxl362 *adxl;
+    adxl = arg;                                
+        
+    if (prevmode>=LP_DEEPSLEEP && newmode <LP_DEEPSLEEP) {
+       // TURN ON : wake up & init its periphs
+
+                      
+    } else if (prevmode<LP_DEEPSLEEP && newmode >= LP_DEEPSLEEP) {
+        // TURN OFF : go to sleep & deinit its periphs
+        if (adxl->sensor.s_itf.si_type == SENSOR_ITF_SPI){
+            deinit_spi(adxl);
+        }
+    }
+}
+#endif
 
 #if MYNEWT_VAL(ADXL362_INT_ENABLE)
 static void interrupt_handler(void * arg);
@@ -302,6 +332,81 @@ adxl362_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     return rc;
 }
 
+
+static float adxl362_convert_reg_to_ms2(int16_t val, float lsb_mg)
+{
+    float tmp = val * lsb_mg * 0.001; /* convert to g */
+    return tmp * STANDARD_ACCEL_GRAVITY; /* convert to ms2 */
+}
+
+static uint8_t adxl362_convert_ms2_to_reg(float ms2, float lsb_mg)
+{
+    float tmp = (ms2 * 1000) / STANDARD_ACCEL_GRAVITY; /* convert to mg */
+    tmp /= lsb_mg; /* convert to reg format */   
+    return (uint8_t) tmp;
+}
+
+/*
+static uint16_t adxl362_convert_regtimer_to_ms(uint16_t time, uint8_t rate_regval)
+{
+    uint16_t sampleRate;
+    
+    switch(rate_regval){
+        case ADXL362_ODR_12_5_HZ:
+                                sampleRate = 12;
+                                break;            
+        case ADXL362_ODR_25_HZ:
+                                sampleRate = 25;
+                                break;
+        case ADXL362_ODR_50_HZ:
+                                sampleRate = 50;
+                                break;
+        default:
+        case ADXL362_ODR_100_HZ:
+                                sampleRate = 100;
+                                break;
+        case ADXL362_ODR_200_HZ:
+                                sampleRate = 200;
+                                break;
+        case ADXL362_ODR_400_HZ:
+                                sampleRate = 400;
+                                break;
+    }
+
+    return ((time/sampleRate)*1000);
+}
+*/
+
+static uint16_t adxl362_convert_ms_to_regtimer(uint16_t time, uint8_t rate_regval)
+{
+    uint16_t sampleRate;
+    
+    switch(rate_regval){
+        case ADXL362_ODR_12_5_HZ:
+                                sampleRate = 12;
+                                break;            
+        case ADXL362_ODR_25_HZ:
+                                sampleRate = 25;
+                                break;
+        case ADXL362_ODR_50_HZ:
+                                sampleRate = 50;
+                                break;
+        default:
+        case ADXL362_ODR_100_HZ:
+                                sampleRate = 100;
+                                break;
+        case ADXL362_ODR_200_HZ:
+                                sampleRate = 200;
+                                break;
+        case ADXL362_ODR_400_HZ:
+                                sampleRate = 400;
+                                break;
+    }
+
+    return ((time/1000)*sampleRate);
+}
+
+
 /**
  * Sets ADXL362 into new power mode
  *
@@ -432,8 +537,6 @@ adxl362_set_accel_range(struct sensor_itf *itf, enum adxl362_accel_range range)
     newFilterCtl = newFilterCtl | ADXL362_FILTER_CTL_RANGE(range);
     adxl362_write8(itf, ADXL362_REG_FILTER_CTL, (uint8_t)newFilterCtl);
 
-    selectedRange = 1<<(1+range);
-
     return 0;
 }
 
@@ -451,7 +554,6 @@ adxl362_get_accel_range(struct sensor_itf *itf, enum adxl362_accel_range *range)
     adxl362_read8(itf, ADXL362_REG_FILTER_CTL, range);
 
     *range = (*range & 0xC0)>>6;
-    selectedRange = 1<<(1+*range);
 
     return 0;
 }
@@ -518,7 +620,7 @@ adxl362_set_active_settings(struct sensor_itf *itf, bool enables, bool refMode,
     }
 
     /* writes active time register*/
-    rc = adxl362_write8(itf, ADXL362_REG_TIME_ACT, (uint8_t)((time/1000)*sampleRate));
+    rc = adxl362_write8(itf, ADXL362_REG_TIME_ACT, (uint8_t)time);
     if(rc){ 
         return rc;
     }
@@ -559,7 +661,6 @@ adxl362_get_active_settings(struct sensor_itf *itf, bool *enables, bool *refMode
     if(rc){ 
         return rc;
     }
-    *time = ((*time/sampleRate)*1000);
 
     rc = adxl362_read8(itf, ADXL362_REG_ACT_INACT_CTL, &reg);
     if(rc){ 
@@ -633,7 +734,6 @@ adxl362_set_inactive_settings(struct sensor_itf *itf, bool enables, bool refMode
     }
 
     /* writes inactive time register*/
-    time = ((time/1000)*sampleRate);
     rc = adxl362_write8(itf, ADXL362_REG_TIME_INACT_L, (uint8_t)(time&0x00FF));
     if(rc){ 
         return rc;
@@ -678,7 +778,6 @@ adxl362_get_inactive_settings(struct sensor_itf *itf, bool *enables, bool *refMo
         return rc;
     }
     *time = (((uint16_t)timeH<<8)&0xFF00) | (uint16_t)timeL;
-    *time = ((*time/sampleRate)*1000);
 
     rc = adxl362_read8(itf, ADXL362_REG_ACT_INACT_CTL, &reg);
     if(rc){ 
@@ -717,28 +816,6 @@ adxl362_set_sample_rate(struct sensor_itf *itf, enum adxl362_sample_rate rate)
     }
     newFilterCtl = oldFilterCtl & ~ADXL362_FILTER_CTL_ODR(0x7);
     newFilterCtl = newFilterCtl | ADXL362_FILTER_CTL_ODR(rate);
-
-    switch(rate){
-        case ADXL362_ODR_12_5_HZ:
-                                sampleRate = 12;
-                                break;            
-        case ADXL362_ODR_25_HZ:
-                                sampleRate = 25;
-                                break;
-        case ADXL362_ODR_50_HZ:
-                                sampleRate = 50;
-                                break;
-        default:
-        case ADXL362_ODR_100_HZ:
-                                sampleRate = 100;
-                                break;
-        case ADXL362_ODR_200_HZ:
-                                sampleRate = 200;
-                                break;
-        case ADXL362_ODR_400_HZ:
-                                sampleRate = 400;
-                                break;
-    }
 
     return adxl362_write8(itf, ADXL362_REG_FILTER_CTL, (uint8_t) newFilterCtl);
 }
@@ -903,6 +980,13 @@ adxl362_init(struct os_dev *dev, void *arg)
 
 #endif
 
+#if MYNEWT_VAL(ADXL_362_LPMODE)
+    // register with lowpowermgr to know when to deinit/init the device
+    LPMgr_id = LPMgr_register(adxl362_lp_change, adxl);
+    // after init we are ok to go into DEEPSLEEP mode
+    LPMgr_setLPMode(LPMgr_id, LP_DEEPSLEEP);
+
+#endif
     
     return 0;
 }
@@ -983,13 +1067,15 @@ adxl362_config(struct adxl362 *dev, struct adxl362_cfg *cfg)
     dev->cfg.sample_rate = cfg->sample_rate;
 
     /* setup activity detection settings */
-    rc = adxl362_set_active_settings(itf, 1, 1, cfg->active_threshold, cfg->active_time_ms);
+    rc = adxl362_set_active_settings(itf, 1, 1, cfg->active_threshold, 
+                                        adxl362_convert_ms_to_regtimer(cfg->active_time_ms, dev->cfg.sample_rate));
     if (rc) {
         return rc;
     }
 
     /* setup inactivity detection settings */
-    rc = adxl362_set_inactive_settings(itf, 1, 1, cfg->inactive_threshold, cfg->inactive_time_ms);
+    rc = adxl362_set_inactive_settings(itf, 1, 1, cfg->inactive_threshold, 
+                                        adxl362_convert_ms_to_regtimer(cfg->inactive_time_ms, dev->cfg.sample_rate));
     if (rc) {
         return rc;
     }
@@ -1032,19 +1118,6 @@ adxl362_config(struct adxl362 *dev, struct adxl362_cfg *cfg)
     return 0;
 }
 
-static float adxl362_convert_reg_to_ms2(int16_t val, float lsb_mg)
-{
-    float tmp = val * lsb_mg * 0.001; /* convert to g */
-    return tmp * STANDARD_ACCEL_GRAVITY; /* convert to ms2 */
-}
-
-static uint8_t adxl362_convert_ms2_to_reg(float ms2, float lsb_mg)
-{
-    float tmp = (ms2 * 1000) / STANDARD_ACCEL_GRAVITY; /* convert to mg */
-    tmp /= lsb_mg; /* convert to reg format */   
-    return (uint8_t) tmp;
-}
-
 /**
  * Reads Accelerometer data from ADXL362 sensor
  *
@@ -1070,13 +1143,12 @@ adxl362_get_accel_data(struct sensor_itf *itf, struct sensor_accel_data *sad)
     y = (((int16_t)payload[3]) << 8) | payload[2];
     z = (((int16_t)payload[5]) << 8) | payload[4];
 
-    /* calculate MS*2 values to provide to data_func */
-    sad->sad_x = adxl362_convert_reg_to_ms2(x, selectedRange/2);
-    sad->sad_x_is_valid = 1;
-    sad->sad_y = adxl362_convert_reg_to_ms2(y, selectedRange/2);
-    sad->sad_y_is_valid = 1;
-    sad->sad_z = adxl362_convert_reg_to_ms2(z, selectedRange/2);
-    sad->sad_z_is_valid = 1;
+    sad->sad_x = x;
+    sad->sad_x_is_valid = 0;
+    sad->sad_y = y;
+    sad->sad_y_is_valid = 0;
+    sad->sad_z = z;
+    sad->sad_z_is_valid = 0;
 
     return 0;
 }
@@ -1101,6 +1173,8 @@ adxl362_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     struct sensor_itf *itf;
     struct sensor_accel_data sad;
+    struct adxl362 *adxl362;
+    float selectedRange;
   
     /* If the read isn't looking for accel don't do anything. */
     if (!(type & SENSOR_TYPE_ACCELEROMETER)) {
@@ -1109,10 +1183,23 @@ adxl362_sensor_read(struct sensor *sensor, sensor_type_t type,
   
     itf = SENSOR_GET_ITF(sensor);
   
+    /*get raw accel datas*/
     rc = adxl362_get_accel_data(itf, &sad);
     if (rc) {
         return rc;
     }
+
+    /* calculate MS*2 values to provide to data_func */
+    adxl362 = (struct adxl362 *)SENSOR_GET_DEVICE(sensor);
+
+    selectedRange = (1<<(1 + adxl362->cfg.accel_range));
+
+    sad.sad_x = adxl362_convert_reg_to_ms2(sad.sad_x, selectedRange/2);
+    sad.sad_x_is_valid = 1;
+    sad.sad_y = adxl362_convert_reg_to_ms2(sad.sad_y, selectedRange/2);
+    sad.sad_y_is_valid = 1;
+    sad.sad_z = adxl362_convert_reg_to_ms2(sad.sad_z, selectedRange/2);
+    sad.sad_z_is_valid = 1;
 
     /* output data using data_func */
     rc = data_func(sensor, data_arg, &sad, SENSOR_TYPE_ACCELEROMETER);
@@ -1137,12 +1224,73 @@ adxl362_sensor_get_config(struct sensor *sensor, sensor_type_t type,
     return 0;
 }
 
+
+/**
+ * Expects to be called back through os_dev_create().
+ *
+ * @param The device object associated with this accelerometer
+ * @param Argument passed to OS device init, unused
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+static int 
+init_spi(struct adxl362 *adxl, struct hal_spi_settings *spi_settings)
+{
+    int rc = 0;
+
+    if(adxl->pdd.itf_is_initialized == true){
+        return rc;
+    }
+
+    rc = hal_spi_config(adxl->sensor.s_itf.si_num, spi_settings);
+    if (rc == EINVAL) {
+        return rc;
+    }
+
+    rc = hal_spi_enable(adxl->sensor.s_itf.si_num);
+    if (rc) {
+        return rc;
+    }
+
+    rc = hal_gpio_init_out(adxl->sensor.s_itf.si_cs_pin, 1);
+    if (rc) {
+        return rc;
+    }
+
+    adxl->pdd.itf_is_initialized = true;
+
+    return rc;
+}
+
+static int 
+deinit_spi(struct adxl362 *adxl){
+    int rc = 0;
+
+    if(adxl->pdd.itf_is_initialized == false){
+        return rc;
+    }
+
+    adxl->pdd.itf_is_initialized = false;
+    
+    return hal_spi_disable(adxl->sensor.s_itf.si_num);
+}
+
+
 #if MYNEWT_VAL(ADXL362_INT_ENABLE)
 static void
 interrupt_handler(void * arg)
 {
-    //asm("bkpt");
-    struct sensor *sensor = arg;
+#if MYNEWT_VAL(ADXL_362_LPMODE)
+    struct sensor *sensor;
+    struct adxl362 *adxl362;
+    sensor = arg;
+    adxl362 = (struct adxl362 *)SENSOR_GET_DEVICE(sensor);
+
+    if (adxl362->sensor.s_itf.si_type == SENSOR_ITF_SPI){
+        init_spi(adxl362, &spi_adxl362_settings);
+    }
+#endif
+
     sensor_mgr_put_interrupt_evt(sensor);
 }
 
@@ -1366,7 +1514,7 @@ adxl362_sensor_set_trigger_thresh(struct sensor * sensor,
     const struct sensor_accel_data * low_thresh;
     const struct sensor_accel_data * high_thresh;
     uint8_t ints_to_enable = 0;
-    float thresh;
+    float thresh, selectedRange;
     struct adxl362_private_driver_data *pdd;
 
     if (sensor_type != SENSOR_TYPE_ACCELEROMETER) {
@@ -1379,6 +1527,8 @@ adxl362_sensor_set_trigger_thresh(struct sensor * sensor,
 
     low_thresh  = stt->stt_low_thresh.sad;
     high_thresh = stt->stt_high_thresh.sad;
+    
+    selectedRange = (1<<(1 + adxl362->cfg.accel_range));
 
     if (low_thresh->sad_x_is_valid |
         low_thresh->sad_y_is_valid |
@@ -1402,7 +1552,8 @@ adxl362_sensor_set_trigger_thresh(struct sensor * sensor,
         }
 
         rc = adxl362_set_inactive_settings(itf, 1, 1,
-                adxl362_convert_ms2_to_reg(thresh, selectedRange/2), 2000);
+                adxl362_convert_ms2_to_reg(thresh, selectedRange/2), 
+                adxl362_convert_ms_to_regtimer(2000, adxl362->cfg.sample_rate));
         
         if (rc) {
             return rc;
@@ -1433,7 +1584,8 @@ adxl362_sensor_set_trigger_thresh(struct sensor * sensor,
         }
 
         rc = adxl362_set_active_settings(itf, 1, 1,
-                adxl362_convert_ms2_to_reg(thresh, selectedRange/2), 2000);
+                adxl362_convert_ms2_to_reg(thresh, selectedRange/2), 
+                adxl362_convert_ms_to_regtimer(2000, adxl362->cfg.sample_rate));
         if (rc) {
             return rc;
         }

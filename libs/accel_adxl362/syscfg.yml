@@ -59,6 +59,9 @@ syscfg.defs:
     ADXL362_ITF_ADDR:
         description: 'Slave address for ADXL362 (0x1D or 0x53)'
         value : 0x1D
+    ADXL_362_LPMODE:
+        decsription: 'low power mode implementation through lowpower_mgnt framework'
+        value : 0
 
 
 syscfg.vals:
@@ -67,4 +70,5 @@ syscfg.vals:
     ADXL362_INT_PIN_HOST:   ((5 * 16) + (15))   #todo : set value into your bsp
     ADXL362_INT_PIN_DEVICE: 1
     ADXL362_INT_CFG_ACTIVE: 1
+    ADXL_362_LPMODE: 1
 

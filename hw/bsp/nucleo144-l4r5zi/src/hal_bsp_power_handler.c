@@ -80,11 +80,10 @@
 
 #include <hal/hal_bsp.h>
 #include "bsp/bsp.h"
-#include "bsp/lowpowermgr.h"
 #include "bsp/hal_power_mgnt.h"
 
-
 #if MYNEWT_VAL(BSP_POWER_SETUP)
+#include "lowpower_mgnt/lowpower_mgnt.h"
 
 static LP_HOOK_t _hook_get_mode_cb=NULL;
 static LP_HOOK_t _hook_exit_cb=NULL;
@@ -185,7 +184,7 @@ void hal_bsp_power_handler_sleep_exit(int lastMode)
     }
 }
 #else 
-void hal_bsp_power_hooks(LP_HOOK_t getMode, LP_HOOK_t enter, LP_HOOK_t exit) {
+void hal_bsp_power_hooks(void* getMode, void* enter, void* exit) {
     // noop
     (void)getMode;
     (void)enter;

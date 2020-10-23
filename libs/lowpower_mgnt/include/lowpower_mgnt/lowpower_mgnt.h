@@ -19,6 +19,8 @@
 extern "C" {
 #endif
 
+#define LP_UNITIALIZED_ID      0xFF
+
 /** register sleep hooks up to app */
 typedef int (*LP_HOOK_t)();
 
@@ -31,10 +33,10 @@ typedef int (*LP_HOOK_t)();
  */ 
 typedef enum  { LP_RUN, LP_DOZE, LP_SLEEP, LP_DEEPSLEEP, LP_OFF } LP_MODE_t;
 typedef uint8_t LP_ID_t;
-typedef void (*LP_CBFN_t)(LP_MODE_t prevmode, LP_MODE_t newmode);
+typedef void (*LP_CBFN_t)(LP_MODE_t prevmode, LP_MODE_t newmode, void *arg);
 
 // Register as a low power actor, to be able to set desired power mode, and to be told when entering or leaving sleep
-LP_ID_t  LPMgr_register(LP_CBFN_t cb);
+LP_ID_t LPMgr_register(LP_CBFN_t cb, void *cb_arg);
 // THe level of sleeping when someone asks to enter low power mode. Each actor sets the appropriate mode for their current operations,
 // and the LPM takes the 'worst' case when doing sleeps
 // TODO should there be a way to FORCE a lp mode (override other users of LPM?)
