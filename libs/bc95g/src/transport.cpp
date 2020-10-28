@@ -75,12 +75,6 @@ int bc95g_register_transport(const char *network_device0, struct bc95g_server *s
     //  network_device is the BC95G device name e.g. "bc95g_0".  Return 0 if successful.
     assert(network_device0);  assert(server0);
 
-#if MYNEWT_VAL(BC95G_ENABLE_PIN) >= 0
-    //  Enable NB-IoT module: Set PA0 to high for Ghostyu L476 dev kit
-    ////TODO: Causes UART to fail
-    ////hal_gpio_init_out(MYNEWT_VAL(BC95G_ENABLE_PIN), 0);
-#endif  //  BC95G_ENABLE_PIN
-
     {   //  Lock the BC95G driver for exclusive use.  Find the BC95G device by name.
         network_is_busy = 1;  //  Tell the Task Scheduler not to sleep (because it causes dropped UART response)
         struct bc95g *dev = (struct bc95g *) os_dev_open(network_device0, OS_TIMEOUT_NEVER, NULL);  //  BC95G_DEVICE is "bc95g_0"
@@ -109,6 +103,8 @@ int bc95g_register_transport(const char *network_device0, struct bc95g_server *s
             struct os_timezone time_zone;
             rc = bc85g_get_time_and_date(dev, &clock_time, &time_zone);
             assert(rc == 0);
+
+            bc95g_sleep_mode_enter();
         }
 
         //  BC95G registered.  Remember the details.
@@ -198,9 +194,6 @@ static void oc_tx_ucast(struct os_mbuf *m) {
         rc = bc95g_socket_rx(dev, socket, rxd_datas_from_server, sizeof(rxd_datas_from_server));
         assert(rc > 0);
 #endif
-
-        //os_time_delay(5 * OS_TICKS_PER_SEC);
-
         //  Close the UDP socket.
         rc = bc95g_socket_close(dev, socket);
         assert(rc == 0);
@@ -209,6 +202,8 @@ static void oc_tx_ucast(struct os_mbuf *m) {
         //  Detach from NB-IoT network.
         rc = bc95g_detach(dev);
 #endif  //  ALWAYS_ATTACHED
+
+        bc95g_sleep_mode_enter();
 
         //  Close the BC95G device when we are done.
         os_dev_close((struct os_dev *) dev);

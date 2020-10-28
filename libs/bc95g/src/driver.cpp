@@ -112,6 +112,10 @@ enum CommandId {
     //  [5] Get current time and date
     CCLK,
 
+    // [6] hw Setup
+    RING_URC,
+    OTHER_URC,
+
 };
 
 /// List of AT commands
@@ -149,6 +153,9 @@ static const char *COMMANDS[] = {
     //  [5] Get current time and date
     "CCLK?",
 
+    // [6] hw Setup
+    "QCFG=\"urc/ri/ring\",\"pulse\",1000,1",
+    "QCFG=\"urc/ri/other\",\"pulse\",1000,1",
 };
 
 /// Prefix for all commands: `AT+`
@@ -159,6 +166,7 @@ static bool sleep(uint16_t seconds) {
     os_time_delay(seconds * OS_TICKS_PER_SEC);
     return true;
 }
+
 /////////////////////////////////////////////////////////
 //  Internal Functions
 
@@ -176,8 +184,19 @@ static void internal_init(char *txbuf, uint32_t txbuf_size, char *rxbuf, uint32_
 
 /// Configure the UART port
 static void internal_configure(const char *uart_devname, uint32_t baudrate) {
+#if MYNEWT_VAL(BC95G_ENABLE_PIN) >= 0
+    hal_gpio_init_out(MYNEWT_VAL(BC95G_ENABLE_PIN), 1);
+    os_time_delay(OS_TICKS_PER_SEC/10);
+    hal_gpio_write(MYNEWT_VAL(BC95G_ENABLE_PIN), 0);
+    os_time_delay(5 * OS_TICKS_PER_SEC);
+#endif  //  BC95G_ENABLE_PIN
+
     serial.configure(uart_devname);
     serial.baud(baudrate);
+
+#if MYNEWT_VAL(BC95G_RI_PIN) >= 0
+    hal_gpio_init_in(MYNEWT_VAL(BC95G_RI_PIN), HAL_GPIO_PULL_NONE);
+#endif  //  BC95G_ENABLE_PIN
 }
 
 /// Attach callback to the UART port
@@ -336,12 +355,18 @@ static void bc95g_event(void *drv);
 
 /// If first time we are opening the driver: Prepare the BC95G transceiver for use.  Lock the UART port.
 static int bc95g_open(struct os_dev *dev0, uint32_t timeout, void *arg) {
-    if (!first_open) { console_printf("[\n"); return 0; }  ////
+
+    struct bc95g *dev = (struct bc95g *) dev0;
+    struct bc95g_cfg *cfg = &dev->cfg;
+
+    if (!first_open) { 
+        console_printf("[\n"); 
+        return 0; 
+    }  ////
+    
     first_open = false;
     console_printf("[\n");  ////
     assert(dev0);
-    struct bc95g *dev = (struct bc95g *) dev0;
-    struct bc95g_cfg *cfg = &dev->cfg;
 
     //  Erase the socket info.
     memset(cfg->sockets, 0, sizeof(cfg->sockets));
@@ -356,6 +381,7 @@ static int bc95g_open(struct os_dev *dev0, uint32_t timeout, void *arg) {
 
     internal_configure(MYNEWT_VAL(BC95G_UART_NAME), MYNEWT_VAL(BC95G_UART_BAUD)); //  Configure the UART port.
     internal_attach(&bc95g_event, dev); //  Set the callback for BC95G events.
+
     return 0;
 }
 
@@ -364,7 +390,16 @@ static int bc95g_close(struct os_dev *dev0) {
     //  TODO: Undo driver.init(), driver.configure() and driver.attach()
     console_printf("]\n");  console_flush();  ////
     assert(dev0);
+
     return 0;
+}
+
+void bc95g_sleep_mode_enter(void){
+    //send commands to bc95g to enter in PSM
+    //... TODO
+    
+    //set serial interface in lp mode
+    serial.halt();
 }
 
 int bc95g_init(struct os_dev *dev0, void *arg) {
@@ -389,7 +424,7 @@ err:
 int bc95g_default_cfg(struct bc95g_cfg *cfg) {
     //  Copy the default BC95G config into cfg.  Returns 0.
     memset(cfg, 0, sizeof(struct bc95g_cfg));  //  Zero the entire object.
-    
+
     //TODO : set BC95G_UART_NAME from here
     //cfg->uart = MYNEWT_VAL(BC95G_UART);
     return 0;
@@ -562,7 +597,9 @@ static bool prepare_to_transmit(struct bc95g *dev) {
         send_command_int(dev, NBAND, MYNEWT_VAL(NBIOT_BAND)) && 
 
         // enable UE related errors cause +CME ERROR:<err> final result code
-        send_command(dev, UEERROR)
+        send_command(dev, UEERROR)  &&
+
+        true
     );
 }
 
@@ -642,6 +679,7 @@ int bc95g_socket_open(struct bc95g *dev, struct bc95g_socket **socket_ptr) {
 }
 
 int bc95g_socket_close(struct bc95g *dev, struct bc95g_socket *socket) {
+
     //  Close the socket.  Return 0 if successful.
     assert(socket && socket == &cfg(dev)->sockets[0]);
     internal_timeout(BC95G_MISC_TIMEOUT);

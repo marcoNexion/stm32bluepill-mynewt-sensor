@@ -108,6 +108,9 @@ int bc95g_socket_rx(struct bc95g *dev, struct bc95g_socket *socket, const uint8_
 //  Attach a callback to a socket.
 void bc95g_socket_attach(struct bc95g *dev, struct bc95g_socket *socket, void (*callback)(void *), void *data);
 
+// Setup bc95g for low power mode
+void bc95g_sleep_mode_enter(void);
+
 const char *bc95g_get_ip_address(struct bc95g *dev);   //  Get the client IP address.
 
 #ifdef __cplusplus

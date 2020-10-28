@@ -16,4 +16,7 @@ syscfg.defs:
         value:       9600
     BC95G_ENABLE_PIN:
         description: 'GPIO Pin that enables and disables the NB-IoT module. Set to -1 for no pin.'
-        value:       -1
+        value:       'MCU_GPIO_PORTD(14)'
+    BC95G_RI_PIN:
+        description: 'control  the RI  (ring  indicator)  behavior  when  a  URC  is  reported'
+        value:       'MCU_GPIO_PORTG(6)'
