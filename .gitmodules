@@ -1,3 +1,0 @@
-[submodule "mcuboot"]
-	path = mcuboot
-	url = C:\\Dev\\stm32bluepill-mynewt-sensor\\repos\\mcuboot
