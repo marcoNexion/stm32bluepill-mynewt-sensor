@@ -238,6 +238,7 @@ static int gps_neo6m_open(struct os_dev *dev0, uint32_t timeout, void *arg) {
 /// Shutdown the GPS transceiver.  Unlock the UART port.
 static int gps_neo6m_close(struct os_dev *dev0) {
     //  TODO: Undo driver.init(), driver.configure() and driver.attach()
+    serial.halt();
     console_printf("]\n");  // console_flush();  ////
     assert(dev0);
     return 0;
