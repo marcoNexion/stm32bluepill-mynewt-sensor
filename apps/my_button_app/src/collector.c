@@ -132,7 +132,8 @@ int start_datacollector(void){
 
     if (strlen(MYNEWT_VAL(GPS_DEVICE)) == 0) {
         console_printf("GPS device not defined\n");
-        return -1;
+        datacollection.GPS.sensor = NULL;
+
     }else{
         console_printf("GPS %s used in datacollection\n", MYNEWT_VAL(GPS_DEVICE));
         //  Fetch the gps sensor by name, without locking the driver for exclusive access.
@@ -183,11 +184,17 @@ void send_datacollector(struct os_event *work){
 
     collect_lock();
 
-    rc = sensor_read(datacollection.GPS.sensor, datacollection.GPS.sensor_type,
-                     store_datacollector, (void *)SENSOR_IGN_LISTENER,
-                     OS_TIMEOUT_NEVER);
+    if(datacollection.GPS.sensor != NULL)
+    {
+        rc = sensor_read(datacollection.GPS.sensor, datacollection.GPS.sensor_type,
+                        store_datacollector, (void *)SENSOR_IGN_LISTENER,
+                        OS_TIMEOUT_NEVER);
+    }else{
+        rc= -1;
+    }
+    
     if (rc) {
-        console_printf("Cannot read %s\n", MYNEWT_VAL(GPS_DEVICE));
+        console_printf("Cannot read GPS sensor %s\n", MYNEWT_VAL(GPS_DEVICE));
         //return 0;
     }
 
@@ -195,7 +202,7 @@ void send_datacollector(struct os_event *work){
                      store_datacollector, (void *)SENSOR_IGN_LISTENER,
                      OS_TIMEOUT_NEVER);
     if (rc) {
-        console_printf("Cannot read %s\n", MYNEWT_VAL(VDD_DEVICE));
+        console_printf("Cannot read VDD sensor %s\n", MYNEWT_VAL(VDD_DEVICE));
         //return 0;
     }
 
@@ -204,7 +211,7 @@ void send_datacollector(struct os_event *work){
                      store_datacollector, (void *)SENSOR_IGN_LISTENER,
                      OS_TIMEOUT_NEVER);
     if (rc) {
-        console_printf("Cannot read %s\n", ADXL362_DEVICE_NAME);
+        console_printf("Cannot read ACCEL sensor %s\n", ADXL362_DEVICE_NAME);
         //return 0;
     }
 #endif

@@ -85,7 +85,8 @@
 			"functional": "cpp",
 			"istream": "cpp",
 			"ostream": "cpp",
-			"ratio": "cpp"
+			"ratio": "cpp",
+			"string_view": "cpp"
 		},
 		"rust.racer_completion": false
 	}
