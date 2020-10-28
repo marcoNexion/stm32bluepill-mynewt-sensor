@@ -211,12 +211,14 @@ void hal_system_clock_start(void){
 
     /**Initializes the CPU, AHB and APB busses clocks
      */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_MSI;
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_MSI | RCC_OSCILLATORTYPE_HSI;
     RCC_OscInitStruct.LSEState = RCC_LSE_OFF;
     RCC_OscInitStruct.LSIState = RCC_LSI_ON;
     RCC_OscInitStruct.MSIState = RCC_MSI_ON;
     RCC_OscInitStruct.MSICalibrationValue = 0;
     RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
+    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+    RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
     RCC_OscInitStruct.PLL.PLLM = 1;
@@ -246,17 +248,17 @@ void hal_system_clock_start(void){
                                             RCC_PERIPHCLK_USART3 | 
                                             RCC_PERIPHCLK_LPUART1 | 
                                             RCC_PERIPHCLK_ADC |
-    #if 1//MYNEWT_VAL(OS_TICKLESS)
+    #if MYNEWT_VAL(OS_TICKLESS)
                                             RCC_PERIPHCLK_LPTIM1 |
     #endif
                                             RCC_PERIPHCLK_USB;
 
     PeriphClkInit.Lpuart1ClockSelection = RCC_LPUART1CLKSOURCE_PCLK1;
     PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
-    PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
+    PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_HSI;
     PeriphClkInit.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
     PeriphClkInit.AdcClockSelection    = RCC_ADCCLKSOURCE_PLLSAI1;
-    #if 1//MYNEWT_VAL(OS_TICKLESS)
+    #if MYNEWT_VAL(OS_TICKLESS)
     PeriphClkInit.Lptim1ClockSelection = RCC_LPTIM1CLKSOURCE_LSI;
     #endif
     PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLLSAI1;
@@ -278,7 +280,7 @@ void hal_system_clock_start(void){
 
     HAL_RCCEx_WakeUpStopCLKConfig(RCC_STOP_WAKEUPCLOCK_MSI);
 
-    HAL_RCC_MCOConfig( RCC_MCO1, RCC_MCO1SOURCE_NOCLOCK, RCC_MCODIV_8);
+    HAL_RCC_MCOConfig( RCC_MCO1, RCC_MCO1SOURCE_HSI, RCC_MCODIV_1);
 
 
 }
@@ -331,20 +333,22 @@ hal_bsp_init(void)
     hal_gpio_init_in(BSP_UART_BITBANG_TX, HAL_GPIO_PULL_NONE);
 #endif
 
-
+#if MYNEWT_VAL(OS_CPUTIME_TIMER_REF)
 
 #if MYNEWT_VAL(TIMER_0)
     rc = hal_timer_init(0, TIM2);
     assert(rc == 0);
 #endif
 
-#if MYNEWT_VAL(SPI_1)
-    rc = hal_spi_init(0, &spi1_cfg, HAL_SPI_TYPE_MASTER);
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
     assert(rc == 0);
 #endif
 
-#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
-    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+#endif
+
+#if MYNEWT_VAL(SPI_1)
+    rc = hal_spi_init(0, &spi1_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
 #endif
 

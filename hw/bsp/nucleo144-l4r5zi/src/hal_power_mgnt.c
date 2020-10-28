@@ -27,19 +27,26 @@
 #include "stm32l4xx_hal_pwr.h"
 #include "bsp/hal_power_mgnt.h"
 #include <mcu/cmsis_nvic.h>
+#include "hal/hal_watchdog.h"
 
 #define EXT_GPIO_FOR_SLEEP_TESTING
+#define EXT_GPIO_FOR_WFI_TESTING
 
-#ifdef EXT_GPIO_FOR_SLEEP_TESTING
-#include "bsp/bsp.h"
-#include "hal/hal_gpio.h"
-#define EXT_OUTPUT  MCU_GPIO_PORTC(6)
 extern void IRQset_get_status(void);
 extern void IRQset_disable_all(void);
+
+#ifdef EXT_GPIO_FOR_SLEEP_TESTING 
+#include "bsp/bsp.h"
+#include "hal/hal_gpio.h"
+#define EXT_SLEEP_OUTPUT  MCU_GPIO_PORTC(6)
 #endif
 
-//extern void SystemClock_RestartPLL(void);
-//extern void SystemClock_StopPLL(void);
+
+#ifdef EXT_GPIO_FOR_WFI_TESTING 
+#include "bsp/bsp.h"
+#include "hal/hal_gpio.h"
+#define EXT_WFI_OUTPUT      MCU_GPIO_PORTC(5)
+#endif
 
 /* maximum time that can be requested from the wakeup timer (and still get the elapsed rtc time correctly) */
 #define MAX_WAKEUP_TIMER_MS MYNEWT_VAL(OS_IDLE_TICKLESS_MS_MAX) //to avoid 16-bit timer overflow
@@ -125,8 +132,13 @@ stm32_tick_init(uint32_t os_ticks_per_sec, int prio)
 #endif
 
 #ifdef EXT_GPIO_FOR_SLEEP_TESTING
-    hal_gpio_init_out(EXT_OUTPUT, 1);
+    hal_gpio_init_out(EXT_SLEEP_OUTPUT, 1);
 #endif
+
+#ifdef EXT_GPIO_FOR_WFI_TESTING
+    hal_gpio_init_out(EXT_WFI_OUTPUT, 1);
+#endif
+
 }
 
 
@@ -135,10 +147,10 @@ static void
 stm32_tickless_start(uint32_t timeMS)
 {
     /* Start RTC alarm for in this amount of time if not 0 (note: case of timeMS==0 is used for HALT ie never coming back) */
-    if (timeMS > 0) {
-        hal_lptimer_start(timeMS);
-    }
+    assert(timeMS > 0);
 
+    hal_lptimer_start(timeMS);
+    
     /* Suspend SysTick Interrupt */
     HAL_SuspendTick();
 }
@@ -147,11 +159,17 @@ static void
 stm32_tickless_stop(uint32_t timeMS)
 {
     /* add asleep duration to tick counter */
-    uint32_t asleep_ms = (uint32_t)hal_lptimer_get_elapsed_time() - 1;
+    uint32_t asleep_ms = (uint32_t)hal_lptimer_get_elapsed_time();
+
+    if(asleep_ms > 0)
+    {
+        /*little adjustement*/
+        asleep_ms -= 1;
+    }
+
+    assert(asleep_ms <= timeMS);
 
     int asleep_ticks = os_time_ms_to_ticks32(asleep_ms);
-
-    assert((asleep_ticks >= 0) && (asleep_ticks <= timeMS));
     
     /* Since ISR is actually suspended : clean pending IRQs */
     /* It's mandatory due to PendSV routine awaiting for  */
@@ -169,6 +187,8 @@ stm32_tickless_stop(uint32_t timeMS)
     /* reenable SysTick Interrupt */
     HAL_ResumeTick();
 
+    hal_watchdog_tickle();
+
 }
 #endif //#if MYNEWT_VAL(OS_TICKLESS)
 
@@ -185,15 +205,17 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
         durationMS = MAX_WAKEUP_TIMER_MS; 
     }
 
+#if MYNEWT_VAL(TIMER_0)
+    //NVIC_DisableIRQ(TIM2_IRQn);
+//    hal_timer_deinit(0);
+#endif
+
     /* begin tickless */
 #if MYNEWT_VAL(OS_TICKLESS)
     stm32_tickless_start(durationMS);
 #endif
 
-#ifdef EXT_GPIO_FOR_SLEEP_TESTING
-    hal_gpio_write(EXT_OUTPUT, 0);
 //    IRQset_get_status();
-#endif
 
     switch (power_mode) {
 
@@ -208,13 +230,24 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
             break;
         }
         case HAL_BSP_POWER_SLEEP: {
+#ifdef EXT_GPIO_FOR_SLEEP_TESTING
+            hal_gpio_write(EXT_SLEEP_OUTPUT, 0);
+#endif
             /*Disables the Power Voltage Detector(PVD) */                 
             //HAL_PWR_DisablePVD( );
             HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
+
+            /* Enable the Internal High Speed oscillator (HSI). */
+            __HAL_RCC_HSI_ENABLE();
             break;
         }
         case HAL_BSP_POWER_WFI: {
+#ifdef EXT_GPIO_FOR_WFI_TESTING
+            hal_gpio_write(EXT_WFI_OUTPUT, 0);
+#endif
+            HAL_PWREx_EnableLowPowerRunMode();
             HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+            HAL_PWREx_DisableLowPowerRunMode();
             /* Clock is not interuppted in SLEEP mode, no need to restart it */
             break;
         }
@@ -226,13 +259,21 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
     }
 
 #ifdef EXT_GPIO_FOR_SLEEP_TESTING
-    hal_gpio_write(EXT_OUTPUT, 1);
-//    IRQset_get_status();
+    hal_gpio_write(EXT_SLEEP_OUTPUT, 1);
 #endif
     
+#ifdef EXT_GPIO_FOR_WFI_TESTING
+    hal_gpio_write(EXT_WFI_OUTPUT, 1);
+#endif
+
 #if MYNEWT_VAL(OS_TICKLESS)
     /* exit tickless low power mode */
     stm32_tickless_stop(durationMS);
+#endif
+
+#if MYNEWT_VAL(TIMER_0)
+    //NVIC_EnableIRQ(TIM2_IRQn);
+    //hal_timer_init(0, TIM2);
 #endif
 
 

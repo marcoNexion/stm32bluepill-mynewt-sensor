@@ -24,7 +24,7 @@ syscfg.defs:
 
     OS_CPUTIME_TIMER_REF:
         description: 'Mynewt OS_CPUTIME_TIMER'
-        value:  0
+        value:  1
 
     UART_0:
         description: 'UART used to communicate with BC95 NbIoT Modem'
@@ -44,7 +44,7 @@ syscfg.defs:
 
     TIMER_0:
         description: 'Timer 0 used by Mynewt for OS_CPUTIME_TIMER'
-        value:  0
+        value:  1
 
     TIMER_1:
         description: 'Timer 1'
@@ -75,13 +75,13 @@ syscfg.vals:
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
     BOOTUTIL_MAX_IMG_SECTORS: 256
 
-    OS_IDLE_TICKLESS_MS_MIN: 100
+    OS_IDLE_TICKLESS_MS_MIN: 0
     OS_IDLE_TICKLESS_MS_MAX: 65530  # Tickless timer is a 16bit timer
 
-    SANITY_INTERVAL:          15000
-    WATCHDOG_INTERVAL :       20000
+    SANITY_INTERVAL:          25000
+    WATCHDOG_INTERVAL :       30000
 
-    BSP_POWER_SETUP: 0
+    BSP_POWER_SETUP: 1
     OS_TICKLESS: 1
     #CONSOLE_UART_DEV: '"uart1"'
     #CONSOLE_UART_BAUD: 115200
@@ -92,6 +92,7 @@ syscfg.vals.SPI_1:
 syscfg.vals.!OS_CPUTIME_TIMER_REF:
     OS_CPUTIME_TIMER: -1
     TIMER_0: 0
+
 syscfg.vals.OS_CPUTIME_TIMER_REF:
     OS_CPUTIME_TIMER: 0
     TIMER_0: 1
