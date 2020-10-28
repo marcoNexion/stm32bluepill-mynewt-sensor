@@ -1,0 +1,4 @@
+[submodule "repos/apache-mynewt-core"]
+	path = repos/apache-mynewt-core
+	url = https://github.com/apache/mynewt-core.git
+	branch = master
