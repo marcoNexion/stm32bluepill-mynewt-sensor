@@ -27,6 +27,12 @@
 #include <os/os.h>  //  For os_sem.
 #include <uart/uart.h>
 #include "ring_buffer.h"
+#include <syscfg/syscfg.h>
+
+#if MYNEWT_VAL(SERIAL_LPMODE)
+#include "lowpower_mgnt/lowpower_mgnt.h"
+#endif
+
 #undef putc      //  Avoid conflict with putc() below.
 
 #define IrqType int
@@ -81,18 +87,11 @@ private:
     RingBuffer <char> _rxbuf;
     uint32_t      _txbuf_size;
     uint32_t      _rxbuf_size; 
-    uint8_t       _initialised;  //  Set to non-zero if UART port has been initialised.
-    os_sem        _rx_sem;     //  Semaphore that is signalled for every byte received.
-    void (*_cbs[2])(void *);   //  RX, TX callbacks, indexed by RxIrq, TxIrq.
-    void *_cbs_arg[2];         //  RX, TX callback arguments, indexed by RxIrq, TxIrq.
+    uint8_t       _initialised; //  Set to non-zero if UART port has been initialised.
+    os_sem        _rx_sem;      //  Semaphore that is signalled for every byte received.
+    void (*_cbs[2])(void *);    //  RX, TX callbacks, indexed by RxIrq, TxIrq.
+    void *_cbs_arg[2];          //  RX, TX callback arguments, indexed by RxIrq, TxIrq.
 
-    /*
-    hal_uart_start_tx   //  Start transmitting UART data in the buffer.  txIrq will retrieve the data from the buffer.
-    hal_uart_start_rx   //  Start receiving UART data.
-    hal_uart_init_cbs   //  Define the UART callbacks.
-    hal_uart_config     //  Set UART parameters.
-    */
-    
 public:
     /** Create a BufferedSerial port
      *  @param uart UART port number. 0 means UART2
@@ -156,6 +155,11 @@ public:
      */
     void attach(void (*func)(void *), void *arg, IrqType type=RxIrq);
 
+    /** Halt the uart driver
+     * 
+     */
+    void halt(void);
+
     //  TODO: Move these internal variables to protected section.
     int rxIrq(uint8_t byte);
     int txIrq(void);
@@ -164,6 +168,10 @@ public:
     uint32_t _baud;
     const char *_uart_devname;
     struct uart_dev *_uartdev;
+#if MYNEWT_VAL(SERIAL_LPMODE)
+    LP_ID_t _LPMgr_id;          // register with lowpowermgr to know when to deinit/init the device
+#endif
+
 };
 
 #endif

@@ -4,3 +4,6 @@
 #   Strings must be enclosed by '"..."'
 
 syscfg.defs:
+    SERIAL_LPMODE:
+        decsription: 'low power mode implementation through lowpower_mgnt framework'
+        value :       1

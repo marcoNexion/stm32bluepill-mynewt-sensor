@@ -31,6 +31,8 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/libc/baselibc"  #  Baselibc, the tiny version of standard C library
+pkg.deps.SERIAL_LPMODE:
+    - "libs/lowpower_mgnt"
 
 # Initialisation functions to be called by sysinit() during startup.
 # Mynewt consolidates the initialisation functions into sysinit()

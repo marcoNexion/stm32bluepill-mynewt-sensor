@@ -30,6 +30,28 @@
 
 extern "C" int BufferedPrintfC(void *stream, int size, const char* format, va_list arg);
 
+#if MYNEWT_VAL(SERIAL_LPMODE)
+// Callback from low power manager about change of mode
+//deal with : LP_RUN, LP_DOZE, LP_SLEEP, LP_DEEPSLEEP, LP_OFF
+static void serial_lp_change(  LP_MODE_t prevmode, 
+                               LP_MODE_t newmode,
+                               void * arg) {
+
+    BufferedSerial *serial = (BufferedSerial *) arg;
+
+    assert(serial->_LPMgr_id != LP_UNITIALIZED_ID);
+
+    if (prevmode>=LP_DEEPSLEEP && newmode <LP_DEEPSLEEP) {
+       // TURN ON : wake up & init its periphs
+        os_dev_resume((struct os_dev *)&serial->_uartdev);
+                      
+    } else if (prevmode<LP_DEEPSLEEP && newmode >= LP_DEEPSLEEP) {
+        // TURN OFF : go to sleep & deinit its periphs
+        os_dev_suspend((struct os_dev *)&serial->_uartdev, os_time_get(), true);
+    }
+}
+#endif
+
 static int serial_tx_char(void *arg) {    
     //  UART driver asks for more data to send. Return -1 if no more data is available for TX.
     assert(arg != NULL);
@@ -49,7 +71,7 @@ static int serial_rx_char(void *arg, uint8_t byte) {
 }
 
 static void serial_tx_done(void *arg) {
-    //  UART driver reports that transmission is complete.  Do nothing.
+    //  UART driver reports that transmission is complete.
 }
 
 int setup_uart(BufferedSerial *serial) {
@@ -75,12 +97,11 @@ int setup_uart(BufferedSerial *serial) {
 
     struct uart_dev *dev = (struct uart_dev *) os_dev_open(uartdevname, OS_TIMEOUT_NEVER, &uc);
     if (dev == NULL) {
-        console_printf("failed to open uart_bitbang device\n");
+        console_printf("failed to open %s\n", uartdevname);
         return -1;
     }
-
     serial->_uartdev = dev;
-
+    
     //// TODO
 #ifdef NOTUSED    
     if (uart == 2) {
@@ -115,6 +136,14 @@ void BufferedSerial::init(char *txbuf, uint32_t txbuf_size, char *rxbuf, uint32_
     _rxbuf_size = rxbuf_size;
     _txbuf.init(txbuf, txbuf_size);
     _rxbuf.init(rxbuf, rxbuf_size);
+
+#if MYNEWT_VAL(SERIAL_LPMODE)
+    // register with lowpowermgr to know when to deinit/init the device
+    _LPMgr_id = LPMgr_register(serial_lp_change, this);
+    // after init we are ok to wait datas while LP_DOZE
+    LPMgr_setLPMode(_LPMgr_id, LP_DEEPSLEEP);
+#endif
+
     os_error_t rc = os_sem_init(&_rx_sem, 0);  //  Init to 0 tokens, so caller will block until data is available.
     assert(rc == OS_OK);
 }
@@ -137,8 +166,13 @@ int BufferedSerial::writeable(void)
 int BufferedSerial::getc(int timeout)
 {
     //  If no data available, wait until the timeout for data.
+#if MYNEWT_VAL(SERIAL_LPMODE)
+    LPMgr_setLPMode(_LPMgr_id, LP_DOZE);
+#endif
     os_sem_pend(&_rx_sem, timeout * OS_TICKS_PER_SEC / 1000);
-    if (_rxbuf.available()) { return _rxbuf.get(); }
+    if (_rxbuf.available()) { 
+        return _rxbuf.get(); 
+    }
     return -1;
 }
 
@@ -218,6 +252,10 @@ void BufferedSerial::prime(void)
         _uartdev->ud_funcs.uf_start_rx(_uartdev); //  Start receiving UART data
     }
     _uartdev->ud_funcs.uf_start_tx(_uartdev);     //  Start transmitting UART data in the buffer.  txIrq will retrieve the data from the buffer.
+
+#if MYNEWT_VAL(SERIAL_LPMODE)
+    LPMgr_setLPMode(_LPMgr_id, LP_DOZE);
+#endif
 }
 
 void BufferedSerial::attach(void (*func)(void *), void *arg, IrqType type)
@@ -229,4 +267,10 @@ void BufferedSerial::attach(void (*func)(void *), void *arg, IrqType type)
 void BufferedSerial::baud(uint32_t baud0)
 {
     _baud = baud0;
+}
+
+void BufferedSerial::halt(void){
+#if MYNEWT_VAL(SERIAL_LPMODE)
+    LPMgr_setLPMode(_LPMgr_id, LP_DEEPSLEEP);
+#endif
 }
