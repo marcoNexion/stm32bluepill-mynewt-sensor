@@ -70,5 +70,5 @@ syscfg.vals:
     ADXL362_INT_PIN_HOST:   ((5 * 16) + (15))   #todo : set value into your bsp
     ADXL362_INT_PIN_DEVICE: 1
     ADXL362_INT_CFG_ACTIVE: 1
-    ADXL_362_LPMODE: 1
+    ADXL_362_LPMODE:        1
 

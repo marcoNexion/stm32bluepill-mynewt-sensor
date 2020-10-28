@@ -40,14 +40,20 @@
 LP_ID_t LPMgr_id = LP_UNITIALIZED_ID;
 #endif
 
-
-static struct hal_spi_settings spi_adxl362_settings = {
-    .data_order = HAL_SPI_MSB_FIRST,
-    .data_mode  = HAL_SPI_MODE0,
-    .baudrate   = 4000,
-    .word_size  = HAL_SPI_WORD_SIZE_8BIT,
+struct spi_adxl362 {
+    struct hal_spi_settings settings;
+    bool _is_enabled;
 };
 
+static struct spi_adxl362 spi_adxl362 = {
+    .settings = {
+        .data_order = HAL_SPI_MSB_FIRST,
+        .data_mode  = HAL_SPI_MODE0,
+        .baudrate   = 4000,
+        .word_size  = HAL_SPI_WORD_SIZE_8BIT,
+    },
+    ._is_enabled = false
+};
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -57,8 +63,11 @@ static struct hal_spi_settings spi_adxl362_settings = {
 #define ADXL362_NOTIFY_MASK  0x01
 #define ADXL362_READ_MASK    0x02
 
-static int init_spi(struct adxl362 *adxl, struct hal_spi_settings *spi_settings);
-static int deinit_spi(struct adxl362 *adxl);
+static int init_spi(struct sensor_itf *spi_itf);
+
+#if MYNEWT_VAL(ADXL_362_LPMODE)
+static int deinit_spi(struct sensor_itf *spi_itf);
+#endif
 
 #if MYNEWT_VAL(ADXL_362_LPMODE)
 // Callback from low power manager about change of mode
@@ -77,7 +86,7 @@ static void adxl362_lp_change(  LP_MODE_t prevmode,
     } else if (prevmode<LP_DEEPSLEEP && newmode >= LP_DEEPSLEEP) {
         // TURN OFF : go to sleep & deinit its periphs
         if (adxl->sensor.s_itf.si_type == SENSOR_ITF_SPI){
-            deinit_spi(adxl);
+            deinit_spi(&adxl->sensor.s_itf);
         }
     }
 }
@@ -271,6 +280,13 @@ adxl362_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
         return rc;
     }
 
+    //if necessary, init spi
+    rc = init_spi(itf);
+
+    if (rc) {
+        return rc;
+    }
+
     rc = adxl362_spi_write8(itf, reg, value);
 
     sensor_itf_unlock(itf);
@@ -297,6 +313,13 @@ adxl362_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
         return rc;
     }
     
+    //if necessary, init spi
+    rc = init_spi(itf);
+
+    if (rc) {
+        return rc;
+    }
+
     rc = adxl362_spi_read8(itf, reg, value);
 
     sensor_itf_unlock(itf);
@@ -321,6 +344,13 @@ adxl362_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     int rc;
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(ADXL362_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
+    //if necessary, init spi
+    rc = init_spi(itf);
+
     if (rc) {
         return rc;
     }
@@ -952,15 +982,17 @@ adxl362_init(struct os_dev *dev, void *arg)
 
     if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
 
-        rc = hal_spi_config(sensor->s_itf.si_num, &spi_adxl362_settings);
+        rc = hal_spi_config(sensor->s_itf.si_num, &spi_adxl362.settings);
         if (rc == EINVAL) {
             return rc;
         }
 
+        /*
         rc = hal_spi_enable(sensor->s_itf.si_num);
         if (rc) {
             return rc;
         }
+        */
 
         rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
         if (rc) {
@@ -985,7 +1017,6 @@ adxl362_init(struct os_dev *dev, void *arg)
     LPMgr_id = LPMgr_register(adxl362_lp_change, adxl);
     // after init we are ok to go into DEEPSLEEP mode
     LPMgr_setLPMode(LPMgr_id, LP_DEEPSLEEP);
-
 #endif
     
     return 0;
@@ -1180,7 +1211,7 @@ adxl362_sensor_read(struct sensor *sensor, sensor_type_t type,
     if (!(type & SENSOR_TYPE_ACCELEROMETER)) {
         return SYS_EINVAL;
     }
-  
+
     itf = SENSOR_GET_ITF(sensor);
   
     /*get raw accel datas*/
@@ -1234,60 +1265,67 @@ adxl362_sensor_get_config(struct sensor *sensor, sensor_type_t type,
  * @return 0 on success, non-zero error on failure.
  */
 static int 
-init_spi(struct adxl362 *adxl, struct hal_spi_settings *spi_settings)
+init_spi(struct sensor_itf *spi_itf)
 {
     int rc = 0;
 
-    if(adxl->pdd.itf_is_initialized == true){
+    if(spi_adxl362._is_enabled == true){
         return rc;
     }
 
-    rc = hal_spi_config(adxl->sensor.s_itf.si_num, spi_settings);
+    rc = hal_spi_enable(spi_itf->si_num);
+    if (rc) {
+        return rc;
+    }
+
+/*    rc = hal_spi_config(spi_itf->si_num, &spi_adxl362.settings);
     if (rc == EINVAL) {
         return rc;
     }
 
-    rc = hal_spi_enable(adxl->sensor.s_itf.si_num);
+    rc = hal_spi_enable(spi_itf->si_num);
     if (rc) {
         return rc;
     }
 
-    rc = hal_gpio_init_out(adxl->sensor.s_itf.si_cs_pin, 1);
+    rc = hal_gpio_init_out(spi_itf->si_cs_pin, 1);
     if (rc) {
         return rc;
     }
-
-    adxl->pdd.itf_is_initialized = true;
+*/
+    spi_adxl362._is_enabled = true;
 
     return rc;
 }
 
+#if MYNEWT_VAL(ADXL_362_LPMODE)
 static int 
-deinit_spi(struct adxl362 *adxl){
+deinit_spi(struct sensor_itf *spi_itf){
     int rc = 0;
 
-    if(adxl->pdd.itf_is_initialized == false){
+    if(spi_adxl362._is_enabled == false){
         return rc;
     }
 
-    adxl->pdd.itf_is_initialized = false;
+    spi_adxl362._is_enabled = false;
     
-    return hal_spi_disable(adxl->sensor.s_itf.si_num);
+    return hal_spi_disable(spi_itf->si_num);
 }
-
+#endif
 
 #if MYNEWT_VAL(ADXL362_INT_ENABLE)
 static void
 interrupt_handler(void * arg)
 {
-#if MYNEWT_VAL(ADXL_362_LPMODE)
     struct sensor *sensor;
-    struct adxl362 *adxl362;
     sensor = arg;
+
+#if 0//MYNEWT_VAL(ADXL_362_LPMODE)
+    struct adxl362 *adxl362;
     adxl362 = (struct adxl362 *)SENSOR_GET_DEVICE(sensor);
 
     if (adxl362->sensor.s_itf.si_type == SENSOR_ITF_SPI){
-        init_spi(adxl362, &spi_adxl362_settings);
+        init_spi(&adxl362->sensor.s_itf);
     }
 #endif
 

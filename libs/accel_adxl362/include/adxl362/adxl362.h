@@ -75,8 +75,6 @@ struct adxl362_private_driver_data {
     uint8_t int_num;
     uint8_t int_route;
     uint8_t int_enable;
-
-    bool itf_is_initialized;
 };
 
     
