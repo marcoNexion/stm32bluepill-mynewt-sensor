@@ -256,7 +256,7 @@ void hal_system_clock_start(void){
     PeriphClkInit.Lpuart1ClockSelection = RCC_LPUART1CLKSOURCE_PCLK1;
     PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
     PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_HSI;
-    PeriphClkInit.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
+    PeriphClkInit.Usart3ClockSelection = RCC_USART2CLKSOURCE_HSI;
     PeriphClkInit.AdcClockSelection    = RCC_ADCCLKSOURCE_PLLSAI1;
     #if MYNEWT_VAL(OS_TICKLESS)
     PeriphClkInit.Lptim1ClockSelection = RCC_LPTIM1CLKSOURCE_LSI;

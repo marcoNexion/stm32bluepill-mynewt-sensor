@@ -15,37 +15,25 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-#
 
-pkg.name: "libs/gps_neo6m"
-pkg.description: "Description of your package"
-pkg.author: "Marc LANDES"
-pkg.homepage: "http://your-url.org/"
+# Dependencies for this package
 
+pkg.name:        libs/tiny_gps_pubx
+pkg.description: TinyGPS Library for parsing NMEA and PUBX data streams 
+pkg.author:      "Kevin Walton and Terry Baume"
+pkg.homepage:    https://github.com/KevWal/TinyGPS
 pkg.keywords:
-    - ublox
+    - tinygps
     - gps
-    - neo6m
+    - nmea
+    - pubx
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/sensor"
-    - "@apache-mynewt-core/hw/drivers/uart"
     - "@apache-mynewt-core/libc/baselibc"  #  Baselibc, the tiny version of standard C library
-    - "libs/tiny_gps_plus"                 #  TinyGPS++ library for parsing NMEA streams
-#    - "libs/tiny_gps_pubx"
-    - "libs/buffered_serial"               #  Buffered Serial Port
-    - "libs/custom_sensor"                 #  Custom sensor data type for Geolocation
-
-#    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-#    - "@apache-mynewt-core/hw/drivers/uart/uart_bitbang"
 
 # Initialisation functions to be called by sysinit() during startup.
 # Mynewt consolidates the initialisation functions into sysinit()
 # and calls them according to the Stage number, highest number first.
-# Stage 500 is used by Sensor Creator so we use Stage 600 onwards.
-# Generated sysinit(): bin/targets/bluepill_my_sensor/generated/src/bluepill_my_sensor-sysinit-app.c
 
 pkg.init:
-    gps_neo6m_create: 700  # Call gps_neo6m_create() to initialise the driver during startup

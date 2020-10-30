@@ -166,9 +166,6 @@ int BufferedSerial::writeable(void)
 int BufferedSerial::getc(int timeout)
 {
     //  If no data available, wait until the timeout for data.
-#if MYNEWT_VAL(SERIAL_LPMODE)
-    LPMgr_setLPMode(_LPMgr_id, LP_DOZE);
-#endif
     os_sem_pend(&_rx_sem, timeout * OS_TICKS_PER_SEC / 1000);
     if (_rxbuf.available()) { 
         return _rxbuf.get(); 
