@@ -1,7 +1,7 @@
 # Target Settings
 
 # Application that will be targeted
-target.app:           apps/only_position_app
+target.app:           apps/my_button_app
 
 # Board Support Package (BSP) for the target
 target.bsp:           "hw/bsp/nucleo144-l4r5zi"

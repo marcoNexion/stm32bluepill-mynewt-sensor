@@ -245,8 +245,9 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
 #endif
             /*Disables the Power Voltage Detector(PVD) */                 
             //HAL_PWR_DisablePVD( );
+            HAL_PWREx_EnableLowPowerRunMode();
             HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
-
+            HAL_PWREx_DisableLowPowerRunMode();
             /* Enable the Internal High Speed oscillator (HSI). */
             __HAL_RCC_HSI_ENABLE();
             break;
