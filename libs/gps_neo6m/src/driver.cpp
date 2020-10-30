@@ -29,7 +29,7 @@
 #include <buffered_serial/buffered_serial.h>
 #include "gps_neo6m/gps_neo6m.h"
 
-//#define GPS_COMMANDS
+#define GPS_COMMANDS
 
 /// Set this to 1 so that `power_sleep()` will not sleep when network is busy connecting.  Defined in apps/my_sensor_app/src/power.c
 extern "C" int power_standby_wakeup();
@@ -72,21 +72,45 @@ Data          : Data fields, delimited by comma
 Example: $PMTK869,1,1*35<CR><LF>
 */
 
+enum GPSTypes {
+    VTG,
+    GGA,
+    GSA,
+    GSV,
+    GLL,
+    RMC,
+    //GNS,
+};
+
+/// List of GPS NMEA types
+static const char *GPS_TYPES[] = {
+    //  Sequence MUST match GPSTypes.
+    "VTG",
+    "GGA",
+    "GSA",
+    "GSV",
+    "GLL",
+    "RMC",
+    //"GNS",
+};
+
 /// IDs of the GPS commands
 enum CommandId {
     //  Sequence MUST match commands[] below.
-    FIRST_COMMAND = 0,
-    EASY_QUERY,
-    EASY_ENABLE,
+    UBX_00 = 0,     //  Lat/Long Position Data
+    //UBX_03,         //  Satellite Status
+    //UBX_04,         //Time of Day and Clock Information
+    UBX_40,         //Set NMEA message output rate
 };
 
 
 /// List of GPS commands. Exclude the leading "$PMTK" and the trailing "*" and checksum.
 static const char *COMMANDS[] = {
     //  Sequence MUST match CommandId.
-    "",          //  FIRST_COMMAND
-    "869,0",     //  EASY_QUERY
-    "869,1,%d",  //  EASY_ENABLE: 0 to disable EASY, 1 to enable EASY
+    "00",
+    //"03",
+    //"04",
+    "40,%s,0,%1d,0,0,0,0",
 };
 #endif
 /////////////////////////////////////////////////////////
@@ -113,6 +137,14 @@ static void internal_attach(void (*func)(void *), void *arg) {
 /////////////////////////////////////////////////////////
 //  Send Commands
 
+/// Return the GPS type for the GPS_TYPE ID.
+static const char *get_gps_type(struct gps_neo6m *dev, enum GPSTypes type) {
+    assert(type >= 0);
+    assert(type < (sizeof(GPS_TYPES) / sizeof(GPS_TYPES[0])));  //  Invalid id
+    const char *t = GPS_TYPES[type];
+    return t;
+}
+
 /// Return the GPS command for the command ID.  Excludes the leading "$PMTK" and the trailing "*" and checksum.
 static const char *get_command(struct gps_neo6m *dev, enum CommandId id) {
     assert(id >= 0);
@@ -132,9 +164,10 @@ static bool send_raw_command(struct gps_neo6m *dev, const char *cmd) {
         "$"
         //  "P"           : For proprietary message
         "P"
-        //  "MTK"         : MTK proprietary message
-        "MTK"
-        //  "000" to "999": Packet Type
+        //  "UBX"         : UBX ublox proprietary message
+        "UBX"
+        //  "," separator
+        ","
         //  Data          : Data fields, delimited by comma
         "%s"
         ,
@@ -151,6 +184,8 @@ static bool send_raw_command(struct gps_neo6m *dev, const char *cmd) {
 
     //  Write to complete NMEA packet to the GPS UART
     bool res = serial.write(raw_buf, strlen(raw_buf));
+
+    os_time_delay(100 * OS_TICKS_PER_SEC/1000);
     // console_flush();
     return res;
 }
@@ -165,6 +200,21 @@ static bool send_command(struct gps_neo6m *dev, enum CommandId id) {
     return res;
 }
 
+bool send_enabling_data_stream_output(struct gps_neo6m *dev, enum GPSTypes gpstype, bool enable)
+{
+    static char cmd_buf[32];
+    assert(dev);
+    const char *cmd = get_command(dev, UBX_40);
+    const char *type = get_gps_type(dev, gpstype);
+
+    assert(type);  assert(strlen(type) + 5 + 6 < sizeof(cmd_buf));
+    //construct the command
+    sprintf(cmd_buf, cmd, type, enable);
+
+    bool res = send_raw_command(dev, cmd_buf);
+    // console_flush();
+    return res;
+}
 
 /*
 ///  Send a GPS command with 1 int parameter e.g. `$PMTK869,1,1*35<CR><LF>`
@@ -288,6 +338,7 @@ int gps_neo6m_config(struct gps_neo6m *drv, struct gps_neo6m_cfg *cfg) {
 
     //  Configure the GPS sensor.
     int rc = gps_neo6m_sensor_config(drv, cfg);  assert(rc == 0);
+    
     return 0;
 }
 
@@ -334,12 +385,24 @@ int gps_neo6m_start(void) {
 int gps_neo6m_connect(struct gps_neo6m *dev) {
     //  Connect to the GPS module. Return 0 if successful.
     serial.prime();  //  Start transmitting and receiving on UART port
-    //serial.write("\r\n\r\n", 4);
-    //send_command(dev, EASY_QUERY);  //  Get EASY status
-    ////send_command_int(dev, EASY_ENABLE, 1);  //  Enable EASY to accelerate TTFF by predicting satellite navigation messages from received ephemeris
+
+    //disable all output to operate in quiet mode
+    send_enabling_data_stream_output(dev, VTG, false);
+    send_enabling_data_stream_output(dev, GGA, false);
+    send_enabling_data_stream_output(dev, GSA, false);
+    send_enabling_data_stream_output(dev, GSV, false);
+    send_enabling_data_stream_output(dev, GLL, false);
+    send_enabling_data_stream_output(dev, RMC, false);
     //os_time_delay(5 * OS_TICKS_PER_SEC);
     return 0;
 }
+
+int gps_neo6m_poll_position(struct gps_neo6m *dev) {
+
+    send_command(dev, UBX_00);  //  poll position
+    return 0;
+}
+
 
 static void rx_event(void *drv) {
     //  Interrupt callback when we receive data on the GPS UART. Fire a callout to handle the received data.
@@ -351,7 +414,14 @@ static void rx_callback(struct os_event *ev) {
     //  Callout that is invoked we receive data on the GPS UART.  Parse the received data.
     while (serial.readable()) {
         int ch = serial.getc(0);  //  Note: this will block if there is nothing to read.
-        gps_parser.encode(ch);  //  Parse the GPS data.
+        
+        //  Parse the GPS data.
+        if(gps_parser.encode(ch)){
+            //sentence is complete when encode() return true
+            //so we can turn off the receiver until the next polling
+            serial.halt();
+        }  
+
         //if (ch != '\r') { char buf[1]; buf[0] = (char) ch; console_buffer(buf, 1); } ////
         //if (ch == '\n') { console_flush(); } ////
         

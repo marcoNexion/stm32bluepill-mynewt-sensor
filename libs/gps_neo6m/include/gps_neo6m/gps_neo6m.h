@@ -68,7 +68,10 @@ int gps_neo6m_init(struct os_dev *dev0, void *arg);
 int gps_neo6m_config(struct gps_neo6m *drv, struct gps_neo6m_cfg *cfg);  
 
 //  Connect to the GPS module.  Return 0 if successful.
-int gps_neo6m_connect(struct gps_neo6m *dev);  
+int gps_neo6m_connect(struct gps_neo6m *dev);
+
+//  Read position by polling
+int gps_neo6m_poll_position(struct gps_neo6m *dev);
 
 //  Internal Sensor Functions
 

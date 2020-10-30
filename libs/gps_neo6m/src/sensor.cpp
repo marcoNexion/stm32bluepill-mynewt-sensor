@@ -87,6 +87,13 @@ static int gps_neo6m_sensor_read(struct sensor *sensor, sensor_type_t type,
     //  Save the GPS geolocation based on the parsed NMEA data
     memset(sensor_data, 0, sizeof(struct sensor_geolocation_data));  //  Init all fields to 0
 
+    struct gps_neo6m *dev;
+    dev = (gps_neo6m*)&sensor->s_dev;
+
+    gps_neo6m_poll_position(dev);
+
+    os_time_delay(1 * OS_TICKS_PER_SEC);
+
 /*    
     if (gps_parser.location.isValid()) {  //  If we have parsed a valid latitude / longtude
         sensor_data->sgd_latitude           = gps_parser.location.lat();
