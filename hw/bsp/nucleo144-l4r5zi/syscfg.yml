@@ -69,29 +69,30 @@ syscfg.defs:
    
 
 syscfg.vals:
-    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
-    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
-    NFFS_FLASH_AREA: FLASH_AREA_NFFS
-    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
-    BOOTUTIL_MAX_IMG_SECTORS: 256
+    REBOOT_LOG_FLASH_AREA:      FLASH_AREA_REBOOT_LOG
+    CONFIG_FCB_FLASH_AREA:      FLASH_AREA_NFFS
+    NFFS_FLASH_AREA:            FLASH_AREA_NFFS
+    COREDUMP_FLASH_AREA:        FLASH_AREA_IMAGE_1
+    BOOTUTIL_MAX_IMG_SECTORS:   256
 
-    OS_IDLE_TICKLESS_MS_MIN: 0
-    OS_IDLE_TICKLESS_MS_MAX: 65530  # Tickless timer is a 16bit timer
+    OS_IDLE_TICKLESS_MS_MIN:    0
+    OS_IDLE_TICKLESS_MS_MAX:    65530  # Tickless timer is a 16bit timer
 
-    SANITY_INTERVAL:          25000
-    WATCHDOG_INTERVAL :       30000
+    SANITY_INTERVAL:            25000
+    WATCHDOG_INTERVAL :         30000
 
-    BSP_POWER_SETUP: 0
-    OS_TICKLESS: 0
-    #CONSOLE_UART_DEV: '"uart1"'
-    #CONSOLE_UART_BAUD: 115200
+    BSP_POWER_SETUP:            1
+    OS_TICKLESS:                1
+    
+    #CONSOLE_UART_DEV:          '"uart1"'
+    #CONSOLE_UART_BAUD:         115200
 
 syscfg.vals.SPI_1:        
-    SPI_0_MASTER: 1
+    SPI_0_MASTER:               1
 
 syscfg.vals.!OS_CPUTIME_TIMER_REF:
-    OS_CPUTIME_TIMER: -1
-    TIMER_0: 0
+    OS_CPUTIME_TIMER:           -1
+    TIMER_0:                    0
 
 syscfg.vals.OS_CPUTIME_TIMER_REF:
     OS_CPUTIME_TIMER: 0

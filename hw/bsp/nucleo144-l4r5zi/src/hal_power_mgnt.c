@@ -197,12 +197,16 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
 {
     /* if sleep time was less than MIN_TICKS, it is 0. Just do usual WFI and systick will wake us in 1ms */
     if (durationMS == 0) {
-        HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+#ifdef EXT_GPIO_FOR_WFI_TESTING
+        hal_gpio_write(EXT_WFI_OUTPUT, 0);
+#endif
+        HAL_PWREx_EnableLowPowerRunMode();
+        HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+        HAL_PWREx_DisableLowPowerRunMode();
+#ifdef EXT_GPIO_FOR_WFI_TESTING
+        hal_gpio_write(EXT_WFI_OUTPUT, 1);
+#endif
         return;
-    }
-    /* limit sleep to largest value of wakeuptimer that is supported by RTC - ensure we wake up before RTC timer wraps */
-    if (durationMS > MAX_WAKEUP_TIMER_MS) {
-        durationMS = MAX_WAKEUP_TIMER_MS; 
     }
 
 #if MYNEWT_VAL(TIMER_0)
@@ -212,6 +216,12 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
 
     /* begin tickless */
 #if MYNEWT_VAL(OS_TICKLESS)
+    /* limit sleep to largest value of wakeuptimer that is supported    */
+    /* by RTC or LPTimer - ensure we wake up before RTC timer wraps     */
+    if (durationMS > MAX_WAKEUP_TIMER_MS) {
+        durationMS = MAX_WAKEUP_TIMER_MS; 
+    }
+
     stm32_tickless_start(durationMS);
 #endif
 
