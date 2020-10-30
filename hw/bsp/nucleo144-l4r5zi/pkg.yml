@@ -51,3 +51,8 @@ pkg.deps.UART_BITBANG:
     - "@apache-mynewt-core/hw/drivers/uart/uart_bitbang"
 pkg.deps.BSP_POWER_SETUP:
     - "libs/lowpower_mgnt"
+
+#  Linker flags
+pkg.lflags: 
+#    - -Wl,-wrap,os_tick_init     #  Rename all os_tick_init() references to __wrap_os_tick_init(), so that we can provide a custom implementation
+#    - -Wl,-wrap,os_tick_idle     #  Rename all os_tick_idle() references to __wrap_os_tick_idle(), so that we can provide a custom implementation
