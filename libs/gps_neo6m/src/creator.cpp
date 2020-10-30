@@ -51,7 +51,13 @@ static int config_device(void);
 
 //  Create the device instance and configure it.  Called by sysinit() during startup, defined in pkg.yml.
 void DEVICE_CREATE(void) {
-    console_printf("%screate " DEVICE_NAME "\n", _gps);
+    
+    if (strlen(MYNEWT_VAL(GPS_DEVICE)) == 0){
+        console_printf("%sno instance... " DEVICE_NAME "\n", _gps);
+        return;
+    }else{
+        console_printf("%screate " DEVICE_NAME "\n", _gps);
+    }
 
     //  Create the device.
     int rc = os_dev_create((struct os_dev *) &DEVICE_INSTANCE, DEVICE_NAME,

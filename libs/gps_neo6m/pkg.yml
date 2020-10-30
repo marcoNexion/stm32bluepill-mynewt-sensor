@@ -33,8 +33,8 @@ pkg.deps:
     - "@apache-mynewt-core/hw/sensor"
     - "@apache-mynewt-core/hw/drivers/uart"
     - "@apache-mynewt-core/libc/baselibc"  #  Baselibc, the tiny version of standard C library
-    - "libs/tiny_gps_plus"                 #  TinyGPS++ library for parsing NMEA streams
-#    - "libs/tiny_gps_pubx"
+#    - "libs/tiny_gps_plus"                 #  TinyGPS++ library for parsing NMEA streams
+    - "libs/tiny_gps_pubx"
     - "libs/buffered_serial"               #  Buffered Serial Port
     - "libs/custom_sensor"                 #  Custom sensor data type for Geolocation
 

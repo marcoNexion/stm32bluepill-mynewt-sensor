@@ -22,12 +22,12 @@
 #include <console/console.h>
 #include <sensor/sensor.h>
 #include <custom_sensor/custom_sensor.h>
-#include <tiny_gps_plus/tiny_gps_plus.h>
-//#include <tiny_gps_pubx/tiny_gps_pubx.h>
+//#include <tiny_gps_plus/tiny_gps_plus.h>
+#include <tiny_gps_pubx/tiny_gps_pubx.h>
 #include "gps_neo6m/gps_neo6m.h"
 
-extern TinyGPSPlus gps_parser;  //  Shared with sensor.cpp
-//extern TinyGPS gps_parser;  //  Shared with sensor.cpp
+//extern TinyGPSPlus gps_parser;  //  Shared with sensor.cpp
+extern TinyGPS gps_parser;  //  Shared with sensor.cpp
 
 //  Exports for the sensor API
 static int gps_neo6m_sensor_read(struct sensor *, sensor_type_t, sensor_data_func_t, void *, uint32_t);
@@ -87,7 +87,7 @@ static int gps_neo6m_sensor_read(struct sensor *sensor, sensor_type_t type,
     //  Save the GPS geolocation based on the parsed NMEA data
     memset(sensor_data, 0, sizeof(struct sensor_geolocation_data));  //  Init all fields to 0
 
-    
+/*    
     if (gps_parser.location.isValid()) {  //  If we have parsed a valid latitude / longtude
         sensor_data->sgd_latitude           = gps_parser.location.lat();
         sensor_data->sgd_longitude          = gps_parser.location.lng();
@@ -99,9 +99,9 @@ static int gps_neo6m_sensor_read(struct sensor *sensor, sensor_type_t type,
         sensor_data->sgd_altitude_is_valid  = 1;
     }
 
-    
+*/    
 
-/*    unsigned long age;
+    unsigned long age;
     float lat, lon;
 
     gps_parser.f_get_position(&lat, &lon, &age);
@@ -114,7 +114,7 @@ static int gps_neo6m_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     sensor_data->sgd_altitude           = gps_parser.f_altitude();
     sensor_data->sgd_altitude_is_valid  = 1;
-*/
+
     if (data_func) {  //  Call the Listener Function to process the sensor data.
         rc = data_func(sensor, data_arg, sensor_data, SENSOR_TYPE_GEOLOCATION);
         if (rc) { goto err; }

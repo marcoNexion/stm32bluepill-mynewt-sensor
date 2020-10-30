@@ -23,8 +23,8 @@
 #include <bsp/bsp.h>
 #include <hal/hal_gpio.h>
 #include <uart/uart.h>
-#include <tiny_gps_plus/tiny_gps_plus.h>
-//#include <tiny_gps_pubx/tiny_gps_pubx.h>
+//#include <tiny_gps_plus/tiny_gps_plus.h>
+#include <tiny_gps_pubx/tiny_gps_pubx.h>
 
 #include <buffered_serial/buffered_serial.h>
 #include "gps_neo6m/gps_neo6m.h"
@@ -44,8 +44,8 @@ static bool first_open = true;  //  True if this is the first time opening the d
 static BufferedSerial serial;
 
 //  GPS parser.  TODO: Support multiple instances.
-TinyGPSPlus gps_parser;  //  Shared with sensor.cpp
-//TinyGPS gps_parser;  //  Shared with sensor.cpp
+//TinyGPSPlus gps_parser;  //  Shared with sensor.cpp
+TinyGPS gps_parser;  //  Shared with sensor.cpp
 
 static struct os_callout rx_callout;
 static void rx_event(void *drv);
@@ -334,7 +334,7 @@ int gps_neo6m_start(void) {
 int gps_neo6m_connect(struct gps_neo6m *dev) {
     //  Connect to the GPS module. Return 0 if successful.
     serial.prime();  //  Start transmitting and receiving on UART port
-    serial.write("\r\n\r\n", 4);
+    //serial.write("\r\n\r\n", 4);
     //send_command(dev, EASY_QUERY);  //  Get EASY status
     ////send_command_int(dev, EASY_ENABLE, 1);  //  Enable EASY to accelerate TTFF by predicting satellite navigation messages from received ephemeris
     //os_time_delay(5 * OS_TICKS_PER_SEC);
@@ -352,8 +352,8 @@ static void rx_callback(struct os_event *ev) {
     while (serial.readable()) {
         int ch = serial.getc(0);  //  Note: this will block if there is nothing to read.
         gps_parser.encode(ch);  //  Parse the GPS data.
-         if (ch != '\r') { char buf[1]; buf[0] = (char) ch; console_buffer(buf, 1); } ////
-         if (ch == '\n') { console_flush(); } ////
+        //if (ch != '\r') { char buf[1]; buf[0] = (char) ch; console_buffer(buf, 1); } ////
+        //if (ch == '\n') { console_flush(); } ////
         
     }
 
