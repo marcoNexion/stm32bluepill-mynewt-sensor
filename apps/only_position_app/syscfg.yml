@@ -48,7 +48,7 @@ syscfg.vals:
     # GPS Settings
     GPS_DEVICE:         '"gps_neo6m"'
 
-    GPS_POLL_TIME:      (10 * 1000)
+    GPS_POLL_TIME:      (2 * 1000)
 
     ###########################################################################
     # OIC Settings for CoAP Transmission
