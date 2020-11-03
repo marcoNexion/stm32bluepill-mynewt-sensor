@@ -20,3 +20,12 @@ syscfg.defs:
     BC95G_RI_PIN:
         description: 'control  the RI  (ring  indicator)  behavior  when  a  URC  is  reported'
         value:       'MCU_GPIO_PORTG(6)'
+    BC95G_PSM_ENABLED:
+        description: 'Power saving mode enabling'
+        value:      1
+    BC95G_NBIOT_T3412:
+        description: 'Requested extended periodic TAU value in minute(s) (T3412) to be allocated to the UE in E-UTRAN'
+        value:      11
+    BC95G_NBIOT_T3324:
+        description: 'Requested Active Time value in seconds (T3324) to be allocated to the UE'
+        value:      10

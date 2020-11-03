@@ -23,7 +23,8 @@ typedef enum{
     STOP = 0x00,
     START = 0x01,
     TIMEOUT_MOVING = 0x02,
-    TIMEOUT_HALTED = 0x03
+    TIMEOUT_HALTED = 0x03,
+    KEEP_ALIVE = 0x04
 
 }TX_REASON;
 

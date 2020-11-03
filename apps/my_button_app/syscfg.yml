@@ -61,7 +61,10 @@ syscfg.defs:
         value:        20 * 1000
     SEMIHOSTING_CONSOLE:
         description: 'Use Arm Semihosting to display console messages. Works with STLink V2 and OpenOCD'
-        value:        1  # Default console is Arm Semihosting
+        value:        0  # Default console is Arm Semihosting
+    RTT_CONSOLE:
+        description: 'Use Segger RTT to display console messages. Works with JLINK only'
+        value:        0  # Default console is Arm Semihosting
     PAYLOAD_USE_TINYCRYPT:
         description: 'Use tinycrypt lib to compute an unique id and to authenticate payload'
         value:        1
@@ -128,9 +131,12 @@ syscfg.vals:
     OC_MAX_PAYLOAD_SIZE:  400  # Platform payload size
 
     ###########################################################################
+    # Debug console 
+    RTT_CONSOLE:            0
+    SEMIHOSTING_CONSOLE:    1
+
+    ###########################################################################
     # Common Settings for minimal ROM size
-    CONSOLE_RTT:              0  # Disable RTT Console
-    CONSOLE_UART:             0  # Disable UART Console
     LOG_CLI:                  0  # Disable logging command-line interface
     LOG_LEVEL:              255  # Disable logs
     SENSOR_CLI:               0  # Disable sensor command-line interface

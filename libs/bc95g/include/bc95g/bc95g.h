@@ -40,6 +40,21 @@ extern "C" {  //  Expose the types and functions below to C functions.
 #define BC95G_SCAN_TIMEOUT        30000  //  30  seconds: Timeout for scanning WiFi access points
 #define BC95G_MISC_TIMEOUT         2000  //   2  seconds: Timeout for opening a socket
 
+#define T3412_TAU_MULTIPLE_10MIN					"000"
+#define T3412_TAU_MULTIPLE_1HOUR					"001"
+#define T3412_TAU_MULTIPLE_10HOUR					"010"
+#define T3412_TAU_MULTIPLE_2SEC						"011"
+#define T3412_TAU_MULTIPLE_30SEC					"100"
+#define T3412_TAU_MULTIPLE_1MIN						"101"
+#define T3412_TAU_MULTIPLE_320HOUR					"110"
+#define T3412_TAU_DEACTIVATED						"111"
+
+#define T3324_ACTIVE_TIME_MULTIPLE_2SEC				"000"
+#define T3324_ACTIVE_TIME_MULTIPLE_1MIN				"000"
+#define T3324_ACTIVE_TIME_MULTIPLE_6MIN				"000"
+#define T3324_ACTIVE_TIME_MULTIPLE_DEACTIVATED		"000"
+
+
 //  BC95G Socket: Represents an BC95G socket that has been allocated.
 struct bc95g_socket {
     uint16_t local_port;  //  Local UDP port number, or 0 if not allocated.

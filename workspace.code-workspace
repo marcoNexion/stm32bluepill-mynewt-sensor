@@ -86,7 +86,8 @@
 			"istream": "cpp",
 			"ostream": "cpp",
 			"ratio": "cpp",
-			"string_view": "cpp"
+			"string_view": "cpp",
+			"custom_coap.h": "c"
 		},
 		"rust.racer_completion": false
 	}

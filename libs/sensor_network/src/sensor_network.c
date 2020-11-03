@@ -333,7 +333,7 @@ bool sensor_network_do_post(uint8_t iface_type) {
     assert(iface_type >= 0 && iface_type < MAX_INTERFACE_TYPES);
     
     bool status = 0;
-#if MYNEWT_VAL(SENCOR_COAP)
+#if MYNEWT_VAL(SENSOR_COAP)
     status = do_sensor_post();
 #endif
 #if MYNEWT_VAL(CUSTOM_COAP)

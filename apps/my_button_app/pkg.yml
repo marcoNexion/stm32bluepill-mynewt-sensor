@@ -74,6 +74,9 @@ pkg.deps.VDD_STM32:
 # Library for Semihosting Console
 pkg.deps.SEMIHOSTING_CONSOLE:
     - "libs/semihosting_console"           #  Semihosting Console
+# Library for RTT Console
+pkg.deps.RTT_CONSOLE:
+    - "libs/rtt_console"
 
 # Library for payload auth
 pkg.deps.PAYLOAD_USE_TINYCRYPT:

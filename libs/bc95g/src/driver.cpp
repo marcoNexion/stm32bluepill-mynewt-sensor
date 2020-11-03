@@ -21,6 +21,7 @@
 //  Note that we are using a patched version of apps/my_sensor_app/src/vsscanf.c that
 //  fixes response parsing bugs.  The patched file must be present in that location.
 #include <os/os.h>
+
 #include <sensor/sensor.h>
 #include <console/console.h>
 #include <sensor_network/sensor_network.h>
@@ -96,6 +97,7 @@ enum CommandId {
     CEREG_QUERY,    //  query registration
     CGATT,          //  attach network
     CGATT_QUERY,    //  query attach
+//    CPSMS,          //  power saving mode 
 
     //  [2] Transmit message
     NSOCR,   //  allocate port
@@ -137,7 +139,8 @@ static const char *COMMANDS[] = {
     "CEREG?",   //  CEREG_QUERY: query registration
     "CGATT=1",  //  CGATT: attach network
     "CGATT?",   //  CGATT_QUERY: query attach
-
+//    "CPSM=%d.1,,,%s.3%s.5,%s.3%s.5",   //CPSM : enable/disable power saving mode
+    
     //  [2] Transmit message
     "NSOCR=DGRAM,17,0,1",  //  NSOCR: allocate port
 
@@ -459,9 +462,28 @@ static void bc95g_event(void *drv) {
 #endif  //  TODO
 }
 
+#if 0
+static bool power_saving_mode(struct bc95g *dev, bool enable, uint8_t T3412_min, uint8_t T3324_sec) {
 
+    char T3412_binary[]="00001";
+    char T3324_binary[]="00101";
 
+    //itoa((T3412_min<<5), T3412_binary, 2);
+    //itoa(((T3324_sec/2)<<5), T3324_binary, 2);
 
+    //"CPSM=%d.1,,,%s.3%s.5,%s.3%s.5",
+    char cmd[32];
+    sprintf(cmd, get_command(dev, CPSMS), (enable?1:0), T3412_TAU_MULTIPLE_1MIN, T3412_binary, T3324_ACTIVE_TIME_MULTIPLE_2SEC, T3324_binary);
+
+    bool res = {
+        send_atp(dev) &&
+        parser.send(cmd) &&
+        expect_ok(dev)
+    };
+
+    return res;
+}
+#endif
 
 /// Wait for NB-IoT network registration
 static bool wait_for_registration(struct bc95g *dev) {
@@ -614,6 +636,12 @@ static bool attach_to_network(struct bc95g *dev) {
 
         //  CFUN_ENABLE: enable network function
         send_command(dev, CFUN_ENABLE) &&
+
+#if 0//MYNEWT_VAL(BC95G_PSM_ENABLED)
+        //power_saving_mode(dev, true, 11, 2) && 
+#else
+        //power_saving_mode(dev, false, 0, 0) &&
+#endif
 
         //  CGATT: attach network
         send_command(dev, CGATT) &&
@@ -868,15 +896,16 @@ int bc95g_socket_rx(struct bc95g *dev, struct bc95g_socket *socket, const uint8_
     uint16_t total_rec_length = 0;
     uint16_t wait_rx_retries = 0;
 
+    internal_timeout(BC95G_RECV_TIMEOUT);
+
+    //poll every BC95G_RECV_TIMEOUT sec to receive something from server's side
     while(1){
 
         total_rec_length += read_rx_command(dev, socket, data, length);
 
         if(total_rec_length == length){break;}
         
-        if(++wait_rx_retries > 10){break;}
-
-        sleep(2);
+        if(++wait_rx_retries >= (MYNEWT_VAL(BC95G_NBIOT_T3324)/BC95G_RECV_TIMEOUT)){break;}
     }
     
 

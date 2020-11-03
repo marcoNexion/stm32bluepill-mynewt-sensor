@@ -134,7 +134,7 @@ prepare_coap_request(oc_client_cb_t *cb, oc_string_t *query)
     else { assert(0); }  //  Unknown CoAP content format.
 
     coap_init_message(oc_c_request, type, cb->method, cb->mid);
-    coap_set_header_accept(oc_c_request, oc_content_format);  //  Either JSON or CBOR.
+    coap_set_header_accept(oc_c_request, oc_content_format);
     coap_set_token(oc_c_request, cb->token, cb->token_len);
     coap_set_header_uri_path(oc_c_request, oc_string(cb->uri));
     if (cb->observe_seq != -1) {
