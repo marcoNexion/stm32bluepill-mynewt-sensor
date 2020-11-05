@@ -31,11 +31,9 @@
 #include "bsp/bsp.h"
 #include <console/console.h>  //  For Mynewt console output. Actually points to libs/semihosting_console
 #include <sensor/sensor.h>    //  For Mynewt Sensor Framework
-#include <custom_coap/custom_coap.h>        //  For sensor_value
 #include "adxl362/adxl362.h"
 #include "collector.h"
 
-static TX_REASON reason;
 
 //Declare called function by notifier
 static int motion_detected(struct sensor* sensor, void *arg, sensor_event_type_t evtype);
@@ -78,18 +76,15 @@ int start_motion_detector(void) {
     return 0;
 }
 
-
-
 static int motion_detected(struct sensor* sensor, void *arg, sensor_event_type_t evtype)
 {
+    struct os_event snoe_evt;
+
     console_printf("%s\n", (evtype==SENSOR_EVENT_TYPE_SLEEP)?"Motion stopped":"Motion detected");
 
-    reason = (evtype==SENSOR_EVENT_TYPE_SLEEP)?TIMEOUT_HALTED:TIMEOUT_MOVING;
-
-    struct os_event ev_md;
-    ev_md.ev_arg = &reason;
-
-    send_datacollector(&ev_md);
+    //os_time_delay(2 * OS_TICKS_PER_SEC);
+    
+    send_datacollector(&snoe_evt);
 
     return 0;
 

@@ -28,7 +28,6 @@
 #include "console/console.h"
 #include "hal/hal_gpio.h"
 #include "app_gpio.h"
-#include <custom_coap/custom_coap.h>        //  For sensor_value
 #include "collector.h"
 
 int button_device[2] = {
@@ -45,25 +44,46 @@ int led_device[2] = {
 	// LED_4,
 };
 */
+static struct os_callout button_work;
+
+
+static void button_pressed(struct os_event *ev){
+	
+	os_callout_reset(&button_work, 0);
+/*
+    if(hal_gpio_read(USER_BLUE_BUTTON)==true){
+        hal_gpio_write(led_device[0], 1);
+    }else{
+        hal_gpio_write(led_device[0], 0);
+    }
+*/
+}
 
 static struct os_event button_event;
-static TX_REASON reason;
 
 static void gpio_irq_handler(void *arg)
 {
+	button_event.ev_arg = arg;
+    
 	os_eventq_put(os_eventq_dflt_get(), &button_event);
 }
 
 void app_gpio_init(void)
 {
+	/* LEDs configiuratin & setting */
+/*
+	hal_gpio_init_out(led_device[0], 0);
+	hal_gpio_init_out(led_device[1], 0);
+*/
 	/* Buttons configiuratin & setting */
 
-	button_event.ev_cb = send_datacollector;
-	button_event.ev_arg = &reason;
-	reason = START;
+	os_callout_init(&button_work, os_eventq_dflt_get(), send_datacollector, NULL);
+
+	button_event.ev_cb = button_pressed;
 
 	hal_gpio_irq_init(button_device[0], gpio_irq_handler, NULL,
 			  HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
+
 	
 	if(start_datacollector()==0){
 		hal_gpio_irq_enable(button_device[0]);

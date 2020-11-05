@@ -35,13 +35,10 @@
 #if MYNEWT_VAL(ACCELEROMETER_ADXL362)
 #include "adxl362/adxl362.h"
 #endif
-#include "collector.h"
+
 
 static struct os_mutex collect_mtx;
 
-#define KEEP_ALIVE_PERIOD	((MYNEWT_VAL(BC95G_NBIOT_T3412) - 1) * 60 * OS_TICKS_PER_SEC) //every 10 min
-static struct os_callout keepalive;
-static TX_REASON reason;
 
 static struct{
     
@@ -173,11 +170,6 @@ int start_datacollector(void){
     //datacollector use a mutex to prevent concurrency calls
     os_mutex_init(&collect_mtx);
 
-    //init a keepalive mechanism to uplink periodically
-	os_callout_init(&keepalive, os_eventq_dflt_get(), send_datacollector, &reason);
-	reason = KEEP_ALIVE;
-    os_callout_reset(&keepalive, KEEP_ALIVE_PERIOD);
-
     //now start network services
     rc = start_server_transport();
     assert(rc == 0);
@@ -186,15 +178,11 @@ int start_datacollector(void){
 
 }
 
-void send_datacollector(struct os_event *ev){
+void send_datacollector(struct os_event *work){
     
     int rc;
-    TX_REASON *reason;
-    reason = ev->ev_arg;
 
     collect_lock();
-
-    os_callout_reset(&keepalive, KEEP_ALIVE_PERIOD);
 
     if(datacollection.GPS.sensor != NULL)
     {
@@ -233,7 +221,7 @@ void send_datacollector(struct os_event *ev){
 
     //fill the output hex struct
     datas.id = 0xDEADBEEF;
-    datas.tx_reason = *reason;
+    datas.tx_reason = START;
     datas.timestamp = datacollection.UTC.time.tv_sec;
     datas.mV_Bat = datacollection.VDD.board.mV;
     datas.position_type = GPS;
@@ -262,7 +250,6 @@ void send_datacollector(struct os_event *ev){
             );
 
     console_printf("Trying to tx : %s\n", str);
-    console_flush();
 
     //  Compose a CoAP message with the temperature sensor data and send to the 
     //  CoAP server.  The message will be enqueued for transmission by the OIC 

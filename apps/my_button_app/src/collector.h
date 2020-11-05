@@ -19,7 +19,6 @@
 
 #ifndef __COLLECTOR_H__
 #define __COLLECTOR_H__
-
 #ifdef __cplusplus
 extern "C" {  //  Expose the types and functions below to C functions.
 #endif
@@ -29,7 +28,7 @@ int start_datacollector(void);
 //  Compose a string type message and send to the CoAP server.  The message will be enqueued for transmission by the CoAP / OIC 
 //  Background Task so this function will return without waiting for the message 
 //  to be transmitted.  Return 0 if successful, SYS_EAGAIN if network is not ready yet.
-void send_datacollector(struct os_event *ev);
+void send_datacollector(struct os_event *work);
 
 #ifdef __cplusplus
 }
