@@ -50,9 +50,9 @@ extern "C" {  //  Expose the types and functions below to C functions.
 #define T3412_TAU_DEACTIVATED						"111"
 
 #define T3324_ACTIVE_TIME_MULTIPLE_2SEC				"000"
-#define T3324_ACTIVE_TIME_MULTIPLE_1MIN				"000"
-#define T3324_ACTIVE_TIME_MULTIPLE_6MIN				"000"
-#define T3324_ACTIVE_TIME_MULTIPLE_DEACTIVATED		"000"
+#define T3324_ACTIVE_TIME_MULTIPLE_1MIN				"001"
+#define T3324_ACTIVE_TIME_MULTIPLE_6MIN				"010"
+#define T3324_ACTIVE_TIME_MULTIPLE_DEACTIVATED		"111"
 
 
 //  BC95G Socket: Represents an BC95G socket that has been allocated.

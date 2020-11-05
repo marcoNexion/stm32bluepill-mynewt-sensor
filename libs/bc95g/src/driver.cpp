@@ -82,11 +82,13 @@ static const struct sensor_network_interface network_iface = {
 enum CommandId {
     //  Sequence MUST match commands[] below.
     FIRST_COMMAND = 0,
+    PID,
 
     //  [0] Prepare to transmit
     NCONFIG,    //  configure
     QREGSWT,    //  huawei
     NRB,        //  reboot
+    NPIN,
 
     //  [1] Attach to network
     NBAND,          //  select band
@@ -97,7 +99,7 @@ enum CommandId {
     CEREG_QUERY,    //  query registration
     CGATT,          //  attach network
     CGATT_QUERY,    //  query attach
-//    CPSMS,          //  power saving mode 
+    CPSMS,          //  power saving mode 
 
     //  [2] Transmit message
     NSOCR,   //  allocate port
@@ -124,11 +126,13 @@ enum CommandId {
 static const char *COMMANDS[] = {
     //  Sequence MUST match CommandId.
     "",  //  FIRST_COMMAND
+    "ATI",
 
     //  [0] Prepare to transmit
     "NCONFIG=AUTOCONNECT,FALSE",  //  NCONFIG: configure
     "QREGSWT=2",    //  QREGSWT: huawei
     "NRB",          //  NRB: reboot
+    "NPIN=3,0000",
 
     //  [1] Attach to network
     "NBAND=%d", //  NBAND: select band
@@ -139,7 +143,7 @@ static const char *COMMANDS[] = {
     "CEREG?",   //  CEREG_QUERY: query registration
     "CGATT=1",  //  CGATT: attach network
     "CGATT?",   //  CGATT_QUERY: query attach
-//    "CPSM=%d.1,,,%s.3%s.5,%s.3%s.5",   //CPSM : enable/disable power saving mode
+    "CPSMS=%1d,,,%3s%5s,%3s%5s",   //CPSM : enable/disable power saving mode
     
     //  [2] Transmit message
     "NSOCR=DGRAM,17,0,1",  //  NSOCR: allocate port
@@ -462,10 +466,9 @@ static void bc95g_event(void *drv) {
 #endif  //  TODO
 }
 
-#if 0
 static bool power_saving_mode(struct bc95g *dev, bool enable, uint8_t T3412_min, uint8_t T3324_sec) {
 
-    char T3412_binary[]="00001";
+    char T3412_binary[]="01010";
     char T3324_binary[]="00101";
 
     //itoa((T3412_min<<5), T3412_binary, 2);
@@ -483,7 +486,6 @@ static bool power_saving_mode(struct bc95g *dev, bool enable, uint8_t T3412_min,
 
     return res;
 }
-#endif
 
 /// Wait for NB-IoT network registration
 static bool wait_for_registration(struct bc95g *dev) {
@@ -611,7 +613,7 @@ static bool prepare_to_transmit(struct bc95g *dev) {
         send_command(dev, NRB) &&
 
         //  Reboot will take longer than other commands. We wait then flush.
-        parser.send("AT") &&
+        parser.send("ATI") &&
         expect_ok(dev) &&
         (parser.flush() == 0) &&
 
@@ -637,11 +639,8 @@ static bool attach_to_network(struct bc95g *dev) {
         //  CFUN_ENABLE: enable network function
         send_command(dev, CFUN_ENABLE) &&
 
-#if 0//MYNEWT_VAL(BC95G_PSM_ENABLED)
-        //power_saving_mode(dev, true, 11, 2) && 
-#else
-        //power_saving_mode(dev, false, 0, 0) &&
-#endif
+        // disable pin to reduce power...
+        send_command(dev, NPIN) &&
 
         //  CGATT: attach network
         send_command(dev, CGATT) &&
@@ -656,6 +655,12 @@ static bool attach_to_network(struct bc95g *dev) {
 
         //  CGATT_QUERY: query attach
         wait_for_attach(dev, 10) &&
+
+#if MYNEWT_VAL(BC95G_PSM_ENABLED)
+        power_saving_mode(dev, true, 11, 2) && 
+#else
+        power_saving_mode(dev, false, 0, 0) &&
+#endif
 
         true
     );

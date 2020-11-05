@@ -175,12 +175,6 @@ static void oc_tx_ucast(struct os_mbuf *m) {
         rc = bc95g_attach(dev);
         assert(rc == 0);
 
-        // Get Time and date
-        struct clocktime clock_time;
-        struct os_timezone time_zone;
-        rc = bc85g_get_time_and_date(dev, &clock_time, &time_zone);
-        assert(rc == 0);
-
         //  Allocate a new UDP socket.
         bc95g_socket *socket = NULL;
         rc = bc95g_socket_open(dev, &socket);
@@ -202,6 +196,12 @@ static void oc_tx_ucast(struct os_mbuf *m) {
         //  Detach from NB-IoT network.
         rc = bc95g_detach(dev);
 #endif  //  ALWAYS_ATTACHED
+
+        // Get Time and date
+        struct clocktime clock_time;
+        struct os_timezone time_zone;
+        rc = bc85g_get_time_and_date(dev, &clock_time, &time_zone);
+        assert(rc == 0);
 
         bc95g_sleep_mode_enter();
 
