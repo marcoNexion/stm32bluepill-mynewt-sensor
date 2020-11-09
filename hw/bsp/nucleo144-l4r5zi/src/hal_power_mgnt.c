@@ -243,13 +243,15 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
 #ifdef EXT_GPIO_FOR_SLEEP_TESTING
             hal_gpio_write(EXT_SLEEP_OUTPUT, 0);
 #endif
-            /*Disables the Power Voltage Detector(PVD) */                 
+            /*Disables the Power Voltage Detector(PVD) */
+            HAL_PWREx_DisableVddIO2();            
             //HAL_PWR_DisablePVD( );
             HAL_PWREx_EnableLowPowerRunMode();
             HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
             HAL_PWREx_DisableLowPowerRunMode();
             /* Enable the Internal High Speed oscillator (HSI). */
             __HAL_RCC_HSI_ENABLE();
+            HAL_PWREx_EnableVddIO2();
             break;
         }
         case HAL_BSP_POWER_WFI: {

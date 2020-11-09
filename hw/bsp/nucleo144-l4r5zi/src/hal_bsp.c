@@ -68,7 +68,7 @@ static const struct stm32_uart_cfg uart_dbg_cfg = {
 static struct uart_dev hal_uart_bc95;
 
 static const struct stm32_uart_cfg uart_bc95_cfg = {
-#if 0
+#if 1
     //doesn't work on USART1 channel...
     //TODO : fix it !!!
     .suc_uart = USART1,
@@ -254,7 +254,7 @@ void hal_system_clock_start(void){
                                             RCC_PERIPHCLK_USB;
 
     PeriphClkInit.Lpuart1ClockSelection = RCC_LPUART1CLKSOURCE_PCLK1;
-    PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
+    PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_HSI;
     PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_HSI;    //RCC_LPUART1CLKSOURCE_PCLK1;
     PeriphClkInit.Usart3ClockSelection = RCC_USART3CLKSOURCE_HSI; //RCC_LPUART1CLKSOURCE_PCLK1;
     PeriphClkInit.AdcClockSelection    = RCC_ADCCLKSOURCE_PLLSAI1;
@@ -309,6 +309,10 @@ hal_bsp_init(void)
 #endif
 
 #if MYNEWT_VAL(UART_0)
+    // Enable VDDIO2 supply for 14 I/Os (Port G[15:2])
+    __HAL_RCC_PWR_CLK_ENABLE();
+    HAL_PWREx_EnableVddIO2();
+
     rc = os_dev_create((struct os_dev *) &hal_uart_bc95, "uart0",
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_bc95_cfg);
     assert(rc == 0);
